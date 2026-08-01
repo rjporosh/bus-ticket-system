@@ -1,0 +1,45 @@
+// ---------------------------------------------------------------------------
+// Design tokens: "Dispatch Console" theme.
+//
+// Concept: this is an operations tool used by booth staff and admins at bus
+// terminals, not a marketing surface — so the direction borrows from transit
+// departure boards and physical ticket stock rather than generic SaaS-admin
+// purple gradients. Deep terminal-navy chrome, a signal-amber accent (the
+// color used on real departure/route boards), split-flap-style monospace for
+// times/seat codes/ticket numbers, and a cool pale-grey surface (deliberately
+// not the warm-cream default).
+// ---------------------------------------------------------------------------
+
+:root {
+  // Core palette
+  --color-ink-900: #0d1c30; // sidebar / header chrome
+  --color-ink-700: #16304f; // panel surfaces on dark chrome
+  --color-ink-500: #2c4a6e; // borders/dividers on dark chrome
+  --color-text-primary: #101b2c;
+  --color-text-muted: #5b7083;
+  --color-surface: #eef2f1; // page background - cool, not cream
+  --color-card: #ffffff;
+  --color-border: #dde4e2;
+
+  // Signal accent (route / departure board amber)
+  --color-accent: #e8a33d;
+  --color-accent-ink: #5c3d0c;
+
+  // Semantic seat/ticket states
+  --color-available: #2f9e62;
+  --color-available-bg: #e5f5ec;
+  --color-sold: #d64545;
+  --color-sold-bg: #fbe9e9;
+  --color-outofservice: #9aa5ac;
+  --color-outofservice-bg: #eceeef;
+
+  // Type
+  --font-display: "IBM Plex Sans Condensed", "Segoe UI", sans-serif;
+  --font-body: "Inter", "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", "Courier New", monospace;
+
+  // Radii / elevation kept restrained (precision over decoration)
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --shadow-card: 0 1px 2px rgba(13, 28, 48, 0.06), 0 1px 1px rgba(13, 28, 48, 0.04);
+}
