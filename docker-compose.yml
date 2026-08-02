@@ -1,0 +1,54 @@
+name: bus-ticketing-system
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      Database__Provider: PostgreSql
+      ConnectionStrings__Default: "Host=postgres;Port=5432;Database=bus_ticketing;Username=postgres;Password=postgres"
+      Jwt__Secret: "${JWT_SECRET:?JWT_SECRET must be set (min 32 chars) - see SETUP.md}"
+      Jwt__Issuer: BusTicketingSystem
+      Jwt__Audience: BusTicketingSystem.Clients
+      Cors__AllowedOrigins__0: "http://localhost:4200"
+      SeedData__Enabled: "true"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/health/live"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: bus_ticketing
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  frontend:
+    build:
+      context: ./frontend/bus-ticketing-admin
+      dockerfile: Dockerfile
+    ports:
+      - "4200:80"
+    depends_on:
+      - api
+
+volumes:
+  postgres_data:
