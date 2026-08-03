@@ -1,0 +1,108 @@
+@use "sass:color";
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: var(--font-body);
+  color: var(--color-text-primary);
+  background: var(--color-surface);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  margin: 0 0 0.5em;
+  color: var(--color-text-primary);
+}
+
+.mono {
+  font-family: var(--font-mono);
+  letter-spacing: 0.02em;
+}
+
+// Departure-board style status chip, used for trip times / statuses across the app.
+.board-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 0.2em 0.6em;
+  border-radius: var(--radius-sm);
+
+  &--available {
+    background: var(--color-available-bg);
+    color: var(--color-available);
+  }
+
+  &--sold {
+    background: var(--color-sold-bg);
+    color: var(--color-sold);
+  }
+
+  &--muted {
+    background: var(--color-outofservice-bg);
+    color: var(--color-outofservice);
+  }
+
+  &--accent {
+    background: color.adjust(#e8a33d, $lightness: 38%);
+    color: var(--color-accent-ink);
+  }
+}
+
+.page-container {
+  padding: 24px clamp(16px, 4vw, 40px);
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.card-surface {
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+}
+
+// Visible keyboard focus everywhere (accessibility floor)
+a:focus-visible,
+button:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+// Print Ticket support: hide app chrome so only the ticket-stub confirmation card prints.
+@media print {
+  app-shell .sidebar,
+  app-shell .topbar,
+  .mat-mdc-tab-header {
+    display: none !important;
+  }
+}
