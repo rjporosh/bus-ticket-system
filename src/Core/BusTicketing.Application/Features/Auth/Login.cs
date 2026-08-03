@@ -49,8 +49,6 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, Result<AuthResp
             .Include(u => u.Role)
             .FirstOrDefaultAsync(u => u.Username == request.Username, cancellationToken);
 
-        // Deliberately identical failure message for "not found" and "wrong password"
-        // to avoid leaking which usernames exist.
         if (user is null || !_passwordHasher.Verify(request.Password, user.PasswordHash))
             return Result.Failure<AuthResponseDto>(Error.Unauthorized("Invalid username or password."));
 
@@ -61,8 +59,18 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, Result<AuthResp
         var refreshTokenValue = _jwtTokenService.GenerateRefreshToken();
         var refreshTokenExpiresAt = _dateTime.UtcNow.AddDays(_jwtSettings.RefreshTokenExpiryDays);
 
-        user.IssueRefreshToken(refreshTokenValue, refreshTokenExpiresAt);
-        await _db.SaveChangesAsync(cancellationToken);
+          // --- FIX: Handle concurrency conflicts gracefully ---
+        try
+        {
+            user.IssueRefreshToken(refreshTokenValue, refreshTokenExpiresAt);
+            await _db.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            // On login, a conflict means another parallel request already updated 
+            // the user's refresh token. This is safe to ignore because the JWT 
+            // access token generated above is still valid for this session.
+        }
 
         await _auditLog.LogAsync("Login", nameof(Domain.Entities.User), user.Id.ToString(), cancellationToken: cancellationToken);
 

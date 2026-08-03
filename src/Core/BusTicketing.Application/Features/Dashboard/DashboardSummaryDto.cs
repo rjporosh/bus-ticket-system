@@ -30,7 +30,7 @@ public class DashboardSummaryDto
 }
 
 /// <summary>
-/// Per-route breakdown: sold seats, available seats, revenue.
+/// Per-route breakdown of sales and seats.
 /// </summary>
 public record RouteSalesDto(
     string RouteName,
@@ -39,7 +39,7 @@ public record RouteSalesDto(
     decimal TotalSales);
 
 /// <summary>
-/// Per-bus/trip breakdown: bus number, route, departure time, available & total seats.
+/// Per-bus breakdown of seat status.
 /// </summary>
 public record BusSeatStatusDto(
     string BusNumber,
