@@ -1,0 +1,28 @@
+// Client Portal Theme
+// Primary brand color
+:root {
+  --primary: #1a73e8;
+  --primary-dark: #0d47a1;
+  --primary-light: #e3f2fd;
+  --accent: #ff4081;
+  --warn: #f44336;
+  --background: #f5f7fa;
+  --surface: #ffffff;
+  --text-primary: #333333;
+  --text-secondary: #666666;
+  --border: #e0e0e0;
+}
+
+// Angular Material theme overrides for client portal
+.mat-mdc-raised-button.mat-primary {
+  background-color: var(--primary);
+}
+
+.mat-mdc-raised-button.mat-accent {
+  background-color: var(--accent);
+}
+
+.mat-mdc-stroked-button.mat-warn {
+  color: var(--warn);
+  border-color: var(--warn);
+}
