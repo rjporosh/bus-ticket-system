@@ -61,6 +61,18 @@ what a client portal would need before it could be built responsibly
 (primarily: the httpOnly-cookie auth migration in SECURITY.md, since a
 public surface has a different threat model than an internal tool).
 
+## Client portal (Phase 3)
+
+| Requirement | Status | Notes |
+|---|---|---|
+| Separate Angular client app | ✅ | `frontend/bus-ticketing-client/` |
+| Public trip search | ✅ | No auth required for browsing |
+| Seat selection | ✅ | Interactive seat map UI |
+| Booking flow | ✅ | Passenger details + fare calculation |
+| My Tickets | ✅ | View and cancel bookings |
+| Login | ✅ | Optional auth for returning customers |
+| Docker + nginx | ✅ | Multi-stage build with SPA fallback |
+
 ## Frontend requirements
 
 | Requirement | Status |

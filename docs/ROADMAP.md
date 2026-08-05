@@ -59,21 +59,11 @@ flowchart TD
     Success --> End2([End])
 ```
 
-## Phase 3 (next): Client-facing portal + production hardening
+## Phase 3: Client-facing portal — ✅ delivered
 
-Not started — deliberately, not by oversight (see FEATURES.md for the reasoning on
-why a speculative client portal wasn't built against undocumented requirements).
-
-### Client portal, once scoped
-- Requires a product decision this brief never made: anonymous browsing +
-  account-based checkout? Guest checkout only? These change the auth model
-  entirely and shouldn't be guessed at in code.
-- Prerequisite regardless of that decision: migrate refresh-token storage to an
-  httpOnly, `SameSite=Strict` cookie (SECURITY.md) — a public surface has a
-  materially different threat model than the internal booth-staff tool this
-  phase built.
-- Real payment gateway integration would replace the mock Payment capture with
-  an actual provider webhook/callback flow.
+Separate Angular client portal for public trip search and booking, running
+parallel to the admin console. See `frontend/bus-ticketing-client/` for the
+full implementation.
 
 ### Hardening
 - Rate limiting on `/auth/login` (SECURITY.md).
