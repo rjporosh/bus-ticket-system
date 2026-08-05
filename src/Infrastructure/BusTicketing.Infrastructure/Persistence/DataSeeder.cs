@@ -29,6 +29,7 @@ public static class DataSeeder
 
         var adminRole = await GetOrCreateRoleAsync(db, SystemRoles.Admin, "Full administrative access.", isSystemRole: true);
         var boothRole = await GetOrCreateRoleAsync(db, SystemRoles.BoothStaff, "Ticket booth staff: sell, cancel and search tickets.", isSystemRole: true);
+        var customerRole = await GetOrCreateRoleAsync(db, SystemRoles.Customer, "Self-service customer account.", isSystemRole: true);
         await db.SaveChangesAsync();
 
         await GetOrCreateUserAsync(db, passwordHasher, "admin", "admin@bus-ticketing.local", "Admin@12345", "System Administrator", adminRole.Id, null);

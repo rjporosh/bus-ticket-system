@@ -1,20 +1,12 @@
 export interface TripDto {
-  tripId: string;
   scheduleId: string;
   busId: string;
-  busName: string;
-  busType: string;
-  routeId: string;
+  busNumber: string;
   routeName: string;
-  fromStationName: string;
-  toStationName: string;
   departureTime: string;
   arrivalTime: string;
-  travelDate: string;
   fareAmount: number;
-  availableSeats: number;
   totalSeats: number;
-  status: string;
 }
 
 export interface StationDto {
@@ -72,18 +64,40 @@ export interface TicketDto {
 }
 
 export interface LoginRequest {
+  username: string;
+  password: string;
+}
+
+export interface RegisterRequest {
+  username: string;
   email: string;
   password: string;
+  fullName: string;
+  phoneNumber?: string;
+}
+
+export interface UserSummary {
+  id: string;
+  username: string;
+  email: string;
+  fullName: string;
+  role: string;
+  boothName?: string | null;
 }
 
 export interface AuthResponse {
   accessToken: string;
+  accessTokenExpiresAtUtc: string;
   refreshToken: string;
-  expiresIn: number;
-  user: {
-    id: string;
-    email: string;
-    fullName: string;
-    roles: string[];
-  };
+  refreshTokenExpiresAtUtc: string;
+  user: UserSummary;
+}
+
+export interface ProblemDetails {
+  type?: string;
+  title?: string;
+  status?: number;
+  detail?: string;
+  instance?: string;
+  errors?: Record<string, string[]>;
 }

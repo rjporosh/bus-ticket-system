@@ -1,7 +1,8 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
+import { AuthService } from '../core/services/auth.service';
 
 @Component({
   selector: 'app-shell',
@@ -17,8 +18,13 @@ import { MatButtonModule } from '@angular/material/button';
           <a routerLink="/my-tickets" routerLinkActive="active" class="nav-link">My Tickets</a>
         </nav>
         <div class="header-actions">
-          <button mat-button routerLink="/login" *ngIf="!isLoggedIn()">Login</button>
-          <button mat-raised-button color="primary" routerLink="/search" *ngIf="!isLoggedIn()">Book Now</button>
+          @if (auth.isAuthenticated()) {
+            <span class="user-name">{{ auth.currentUser()?.fullName }}</span>
+            <button mat-button (click)="logout()">Logout</button>
+          } @else {
+            <button mat-button routerLink="/login">Login</button>
+            <button mat-raised-button color="primary" routerLink="/register">Register</button>
+          }
         </div>
       </div>
     </header>
@@ -49,5 +55,9 @@ import { MatButtonModule } from '@angular/material/button';
   `]
 })
 export class ShellComponent {
-  isLoggedIn() { return false; }
+  protected readonly auth = inject(AuthService);
+
+  logout(): void {
+    this.auth.logout();
+  }
 }

@@ -19,23 +19,26 @@ public class SchedulesController : ControllerBase
     private readonly ISender _sender;
     public SchedulesController(ISender sender) => _sender = sender;
 
-    /// <summary>Lists recurring schedules with optional bus/route/status filters, paginated.</summary>
+    /// <summary>Public: lists recurring schedules with optional bus/route/status filters, paginated.</summary>
     [HttpGet]
+    [AllowAnonymous]
     [ProducesResponseType(typeof(PaginatedList<ScheduleDto>), StatusCodes.Status200OK)]
     public async Task<ActionResult<PaginatedList<ScheduleDto>>> GetAll(
         [FromQuery] Guid? busId, [FromQuery] Guid? routeId, [FromQuery] ScheduleStatus? status,
         [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 20, CancellationToken cancellationToken = default)
         => Ok(await _sender.Send(new GetSchedulesQuery(busId, routeId, status, pageNumber, pageSize), cancellationToken));
 
-    /// <summary>Resolves recurring schedules into concrete trips for a specific travel date (e.g. "today's trips").</summary>
+    /// <summary>Public: resolves recurring schedules into concrete trips for a specific travel date (e.g. "today's trips").</summary>
     [HttpGet("trips")]
+    [AllowAnonymous]
     [ProducesResponseType(typeof(List<TripDto>), StatusCodes.Status200OK)]
     public async Task<ActionResult<List<TripDto>>> GetTrips(
         [FromQuery] DateOnly travelDate, [FromQuery] Guid? routeId, CancellationToken cancellationToken)
         => Ok(await _sender.Send(new GetTripsForDateQuery(travelDate, routeId), cancellationToken));
 
-    /// <summary>Gets a single schedule by id.</summary>
+    /// <summary>Public: gets a single schedule by id.</summary>
     [HttpGet("{id:guid}")]
+    [AllowAnonymous]
     [ProducesResponseType(typeof(ScheduleDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IResult> GetById(Guid id, CancellationToken cancellationToken)

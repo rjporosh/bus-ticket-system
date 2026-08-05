@@ -5,6 +5,7 @@ public static class SystemRoles
 {
     public const string Admin = "Admin";
     public const string BoothStaff = "BoothStaff";
+    public const string Customer = "Customer";
 }
 
 public enum SeatClass

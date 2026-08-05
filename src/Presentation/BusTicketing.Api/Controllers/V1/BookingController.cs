@@ -12,7 +12,7 @@ namespace BusTicketing.Api.Controllers.V1;
 [ApiController]
 [ApiVersion("1.0")]
 [Route("api/v{version:apiVersion}/booking")]
-[Authorize(Roles = SystemRoles.Admin + "," + SystemRoles.BoothStaff)]
+[Authorize(Roles = SystemRoles.Admin + "," + SystemRoles.BoothStaff + "," + SystemRoles.Customer)]
 [Produces("application/json")]
 public class BookingController : ControllerBase
 {
