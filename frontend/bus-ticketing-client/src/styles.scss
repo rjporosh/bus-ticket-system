@@ -1,6 +1,5 @@
 /* Global styles for client portal */
-@import '~@angular/material/prebuilt-themes/azure-blue.css';
-@import './assets/styles/theme.scss';
+@use './assets/styles/theme.scss';
 
 * {
   margin: 0;

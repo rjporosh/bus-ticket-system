@@ -1,14 +1,17 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatButtonModule } from '@angular/material/button';
 import { ApiService } from '../../core/services/api.service';
 import { TripDto } from '../../core/models/api-models';
 
 @Component({
   selector: 'app-search',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, MatFormFieldModule, MatInputModule, MatButtonModule],
   template: `
     <div class="search-container">
       <div class="search-card">
@@ -78,7 +81,7 @@ import { TripDto } from '../../core/models/api-models';
         </div>
       </div>
 
-      <div class="no-results" *ngIf="searched && trips().length === 0">
+      <div class="no-results" *ngIf="searched() && trips().length === 0">
         <p>No trips found for your criteria. Try different dates or routes.</p>
       </div>
     </div>
