@@ -1,10 +1,6 @@
-using BusTicketing.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace BusTicketing.IntegrationTests;
 
@@ -26,17 +22,15 @@ public class ApiWebApplicationFactory : WebApplicationFactory<Program>
             configBuilder.AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["SeedData:Enabled"] = "false",
+                ["Database:Testing"] = "true",
                 ["Jwt:Secret"] = "integration-test-secret-key-at-least-32-characters-long",
                 ["Jwt:Issuer"] = "BusTicketingSystem.Tests",
                 ["Jwt:Audience"] = "BusTicketingSystem.Tests.Clients"
             });
         });
 
-        builder.ConfigureServices(services =>
-        {
-            services.RemoveAll<DbContextOptions<ApplicationDbContext>>();
-            services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseInMemoryDatabase(_databaseName));
-        });
+        // The Infrastructure DI handles the InMemory provider selection based on
+        // Database:Testing=true; no need to re-register ApplicationDbContext here.
+        _ = _databaseName;
     }
 }

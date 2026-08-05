@@ -21,9 +21,20 @@ public static class DependencyInjection
         services.AddScoped<AuditableEntityInterceptor>();
         services.AddSingleton<QueryLoggingInterceptor>();
 
+        // The integration tests (WebApplicationFactory<Program>) set "Testing" in
+        // MemoryDatabase and config to disable the real provider. This avoids the
+        // Npgsql/InMemory provider conflict by short-circuiting before UseConfiguredProvider.
+        var inTesting = configuration.GetValue<string>("Database:Testing") == "true";
         services.AddDbContext<ApplicationDbContext>((sp, options) =>
         {
-            options.UseConfiguredProvider(configuration);
+            if (inTesting)
+            {
+                options.UseInMemoryDatabase("BusTicketingTesting");
+            }
+            else
+            {
+                options.UseConfiguredProvider(configuration);
+            }
             options.AddInterceptors(sp.GetRequiredService<AuditableEntityInterceptor>());
             options.AddInterceptors(sp.GetRequiredService<QueryLoggingInterceptor>());
         });

@@ -17,7 +17,15 @@ public static class DataSeeder
 {
     public static async Task SeedAsync(ApplicationDbContext db, IPasswordHasher passwordHasher, ILogger logger)
     {
-        await db.Database.MigrateAsync();
+        // InMemory provider has no migrations; EnsureCreated is idempotent for testing.
+        if (db.Database.IsInMemory())
+        {
+            await db.Database.EnsureCreatedAsync();
+        }
+        else
+        {
+            await db.Database.MigrateAsync();
+        }
 
         var adminRole = await GetOrCreateRoleAsync(db, SystemRoles.Admin, "Full administrative access.", isSystemRole: true);
         var boothRole = await GetOrCreateRoleAsync(db, SystemRoles.BoothStaff, "Ticket booth staff: sell, cancel and search tickets.", isSystemRole: true);

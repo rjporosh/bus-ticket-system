@@ -1,0 +1,250 @@
+
+> bus-ticketing-client@1.0.0 build
+> ng build
+
+❯ Building...
+✔ Building...
+Application bundle generation failed. [1.652 seconds] - 2026-08-05T20:49:24.143Z
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mDeprecation[0m [1m[35m[plugin angular-sass][0m
+
+    src/styles.scss:3:8:
+[37m      3 │ @import [32m[37m'./assets/styles/theme.scss';
+        ╵         [32m^[0m
+
+
+  Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+  
+  More info and automated migrator: [4mhttps://sass-lang.com/d/import[0m
+
+  The plugin "angular-sass" was triggered by this import
+
+    angular:styles/global:styles:3:8:
+[37m      3 │ @import [32m'src/styles.scss'[37m;
+        ╵         [32m~~~~~~~~~~~~~~~~~[0m
+
+
+[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mTS5103: Invalid value for '--ignoreDeprecations'.[0m [1m[35m[plugin angular-compiler][0m
+
+
+[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mTS6054: File '/Users/prince/Downloads/BusTicketingSystem/frontend/bus-ticketing-client/src/index.html' has an unsupported extension. The only supported extensions are '.ts', '.tsx', '.d.ts', '.cts', '.d.cts', '.mts', '.d.mts'.
+  The file is in the program because:
+    Root file specified for compilation[0m [1m[35m[plugin angular-compiler][0m
+
+
+[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mTS2300: Duplicate identifier 'provideHttpClient'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/app.config.ts:3:9:
+[37m      3 │ import { [32mprovideHttpClient[37m, withInterceptorsFromDi } from '@angular...
+        ╵          [32m~~~~~~~~~~~~~~~~~[0m
+
+
+[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mTS2300: Duplicate identifier 'provideHttpClient'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/app.config.ts:7:9:
+[37m      7 │ import { [32mprovideHttpClient[37m } from '@angular/common/http';
+        ╵          [32m~~~~~~~~~~~~~~~~~[0m
+
+
+[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mTS2307: Cannot find module '../../core/services/api.service' or its corresponding type declarations.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/auth/login/login.component.ts:5:27:
+[37m      5 │ import { ApiService } from [32m'../../core/services/api.service'[37m;
+        ╵                            [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mTS2307: Cannot find module '../../core/models/api-models' or its corresponding type declarations.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/auth/login/login.component.ts:6:43:
+[37m      6 │ ...{ LoginRequest, AuthResponse } from [32m'../../core/models/api-models'[37m;
+        ╵                                        [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mTS2304: Cannot find name 'signal'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/auth/login/login.component.ts:55:12:
+[37m      55 │   loading = [32msignal[37m(false);
+         ╵             [32m~~~~~~[0m
+
+
+[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mNG2003: No suitable injection token for parameter 'api' of class 'LoginComponent'.
+  Consider using the @Inject decorator to specify an injection token.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/auth/login/login.component.ts:57:47:
+[37m      57 │ ...vate fb: FormBuilder, private [32mapi[37m: ApiService, private router: ...
+         ╵                                  [32m~~~[0m
+
+  This type does not have a value, so it cannot be used as injection token.
+
+    src/app/features/auth/login/login.component.ts:57:52:
+[37m      57 │ ...b: FormBuilder, private api: [32mApiService[37m, private router: Router) {
+         ╵                                 [32m~~~~~~~~~~[0m
+
+
+[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mNG8001: 'mat-form-field' is not a known element:
+1. If 'mat-form-field' is an Angular component, then verify that it is included in the '@Component.imports' of this component.
+2. If 'mat-form-field' is a Web Component then add 'CUSTOM_ELEMENTS_SCHEMA' to the '@Component.schemas' of this component to suppress this message.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/booking/booking.component.ts:48:12:
+[37m      48 │             [32m<mat-form-field appearance="outline" class="full-width">[37m
+         ╵             [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mNG8001: 'mat-label' is not a known element:
+1. If 'mat-label' is an Angular component, then verify that it is included in the '@Component.imports' of this component.
+2. If 'mat-label' is a Web Component then add 'CUSTOM_ELEMENTS_SCHEMA' to the '@Component.schemas' of this component to suppress this message.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/booking/booking.component.ts:49:14:
+[37m      49 │               [32m<mat-label>[37mFull Name</mat-label>
+         ╵               [32m~~~~~~~~~~~[0m
+
+
+[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mNG8001: 'mat-error' is not a known element:
+1. If 'mat-error' is an Angular component, then verify that it is included in the '@Component.imports' of this component.
+2. If 'mat-error' is a Web Component then add 'CUSTOM_ELEMENTS_SCHEMA' to the '@Component.schemas' of this component to suppress this message.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/booking/booking.component.ts:51:14:
+[37m      51 │ ...          [32m<mat-error *ngIf="bookingForm.get('passengerName')?.h[37m...
+         ╵              [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mNG8001: 'mat-form-field' is not a known element:
+1. If 'mat-form-field' is an Angular component, then verify that it is included in the '@Component.imports' of this component.
+2. If 'mat-form-field' is a Web Component then add 'CUSTOM_ELEMENTS_SCHEMA' to the '@Component.schemas' of this component to suppress this message.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/booking/booking.component.ts:53:12:
+[37m      53 │             [32m<mat-form-field appearance="outline" class="full-width">[37m
+         ╵             [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mNG8001: 'mat-label' is not a known element:
+1. If 'mat-label' is an Angular component, then verify that it is included in the '@Component.imports' of this component.
+2. If 'mat-label' is a Web Component then add 'CUSTOM_ELEMENTS_SCHEMA' to the '@Component.schemas' of this component to suppress this message.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/booking/booking.component.ts:54:14:
+[37m      54 │               [32m<mat-label>[37mMobile Number</mat-label>
+         ╵               [32m~~~~~~~~~~~[0m
+
+
+[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mNG8001: 'mat-error' is not a known element:
+1. If 'mat-error' is an Angular component, then verify that it is included in the '@Component.imports' of this component.
+2. If 'mat-error' is a Web Component then add 'CUSTOM_ELEMENTS_SCHEMA' to the '@Component.schemas' of this component to suppress this message.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/booking/booking.component.ts:56:14:
+[37m      56 │ ...          [32m<mat-error *ngIf="bookingForm.get('passengerMobile')?[37m...
+         ╵              [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mNG8001: 'mat-form-field' is not a known element:
+1. If 'mat-form-field' is an Angular component, then verify that it is included in the '@Component.imports' of this component.
+2. If 'mat-form-field' is a Web Component then add 'CUSTOM_ELEMENTS_SCHEMA' to the '@Component.schemas' of this component to suppress this message.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/booking/booking.component.ts:58:12:
+[37m      58 │             [32m<mat-form-field appearance="outline" class="full-width">[37m
+         ╵             [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mNG8001: 'mat-label' is not a known element:
+1. If 'mat-label' is an Angular component, then verify that it is included in the '@Component.imports' of this component.
+2. If 'mat-label' is a Web Component then add 'CUSTOM_ELEMENTS_SCHEMA' to the '@Component.schemas' of this component to suppress this message.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/booking/booking.component.ts:59:14:
+[37m      59 │               [32m<mat-label>[37mEmail (optional)</mat-label>
+         ╵               [32m~~~~~~~~~~~[0m
+
+
+[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mNG8001: 'mat-form-field' is not a known element:
+1. If 'mat-form-field' is an Angular component, then verify that it is included in the '@Component.imports' of this component.
+2. If 'mat-form-field' is a Web Component then add 'CUSTOM_ELEMENTS_SCHEMA' to the '@Component.schemas' of this component to suppress this message.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/search/search.component.ts:18:12:
+[37m      18 │             [32m<mat-form-field appearance="outline" class="full-width">[37m
+         ╵             [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mNG8001: 'mat-label' is not a known element:
+1. If 'mat-label' is an Angular component, then verify that it is included in the '@Component.imports' of this component.
+2. If 'mat-label' is a Web Component then add 'CUSTOM_ELEMENTS_SCHEMA' to the '@Component.schemas' of this component to suppress this message.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/search/search.component.ts:19:14:
+[37m      19 │               [32m<mat-label>[37mFrom</mat-label>
+         ╵               [32m~~~~~~~~~~~[0m
+
+
+[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mNG8001: 'mat-form-field' is not a known element:
+1. If 'mat-form-field' is an Angular component, then verify that it is included in the '@Component.imports' of this component.
+2. If 'mat-form-field' is a Web Component then add 'CUSTOM_ELEMENTS_SCHEMA' to the '@Component.schemas' of this component to suppress this message.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/search/search.component.ts:22:12:
+[37m      22 │             [32m<mat-form-field appearance="outline" class="full-width">[37m
+         ╵             [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mNG8001: 'mat-label' is not a known element:
+1. If 'mat-label' is an Angular component, then verify that it is included in the '@Component.imports' of this component.
+2. If 'mat-label' is a Web Component then add 'CUSTOM_ELEMENTS_SCHEMA' to the '@Component.schemas' of this component to suppress this message.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/search/search.component.ts:23:14:
+[37m      23 │               [32m<mat-label>[37mTo</mat-label>
+         ╵               [32m~~~~~~~~~~~[0m
+
+
+[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mNG8001: 'mat-form-field' is not a known element:
+1. If 'mat-form-field' is an Angular component, then verify that it is included in the '@Component.imports' of this component.
+2. If 'mat-form-field' is a Web Component then add 'CUSTOM_ELEMENTS_SCHEMA' to the '@Component.schemas' of this component to suppress this message.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/search/search.component.ts:28:12:
+[37m      28 │             [32m<mat-form-field appearance="outline" class="full-width">[37m
+         ╵             [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mNG8001: 'mat-label' is not a known element:
+1. If 'mat-label' is an Angular component, then verify that it is included in the '@Component.imports' of this component.
+2. If 'mat-label' is a Web Component then add 'CUSTOM_ELEMENTS_SCHEMA' to the '@Component.schemas' of this component to suppress this message.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/search/search.component.ts:29:14:
+[37m      29 │               [32m<mat-label>[37mTravel Date</mat-label>
+         ╵               [32m~~~~~~~~~~~[0m
+
+
+[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mNG8001: 'mat-form-field' is not a known element:
+1. If 'mat-form-field' is an Angular component, then verify that it is included in the '@Component.imports' of this component.
+2. If 'mat-form-field' is a Web Component then add 'CUSTOM_ELEMENTS_SCHEMA' to the '@Component.schemas' of this component to suppress this message.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/search/search.component.ts:32:12:
+[37m      32 │             [32m<mat-form-field appearance="outline" class="full-width">[37m
+         ╵             [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mNG8001: 'mat-label' is not a known element:
+1. If 'mat-label' is an Angular component, then verify that it is included in the '@Component.imports' of this component.
+2. If 'mat-label' is a Web Component then add 'CUSTOM_ELEMENTS_SCHEMA' to the '@Component.schemas' of this component to suppress this message.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/search/search.component.ts:33:14:
+[37m      33 │               [32m<mat-label>[37mPassengers</mat-label>
+         ╵               [32m~~~~~~~~~~~[0m
+
+
+[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mNG8002: Can't bind to 'routerLink' since it isn't a known property of 'button'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/search/search.component.ts:75:55:
+[37m      75 │ ...or="accent" [32m[routerLink]="['/booking', trip.tripId]"[37m>Select Sea...
+         ╵                [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mTS2774: This condition will always return true since this function is always defined. Did you mean to call it instead?[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/search/search.component.ts:81:37:
+[37m      81 │ ... <div class="no-results" *ngIf="[32msearched[37m && trips().length === 0">
+         ╵                                    [32m~~~~~~~~[0m
+
+
+[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mCould not resolve "~@angular/material/prebuilt-themes/azure-blue.css"[0m
+
+    src/styles.scss:2:8:
+[37m      2 │ @import [32m'~@angular/material/prebuilt-themes/azure-blue.css'[37m;
+        ╵         [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+  You can mark the path "~@angular/material/prebuilt-themes/azure-blue.css" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+
+
