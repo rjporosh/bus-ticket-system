@@ -204,7 +204,7 @@ public class GetScheduleByIdQueryHandler : IRequestHandler<GetScheduleByIdQuery,
 }
 
 /// <summary>Resolves recurring schedules into concrete same-day trips for a given travel date, e.g. for the "Today's Trips" dashboard widget.</summary>
-public record TripDto(Guid ScheduleId, Guid BusId, string BusNumber, string RouteName, TimeOnly DepartureTime, TimeOnly ArrivalTime, decimal FareAmount, int TotalSeats);
+public record TripDto(Guid ScheduleId, Guid BusId, string BusNumber, string RouteName, TimeOnly DepartureTime, TimeOnly ArrivalTime, decimal FareAmount, int TotalSeats, int AvailableSeats);
 
 public record GetTripsForDateQuery(DateOnly TravelDate, Guid? RouteId = null) : IRequest<List<TripDto>>;
 
@@ -227,10 +227,23 @@ public class GetTripsForDateQueryHandler : IRequestHandler<GetTripsForDateQuery,
 
         var candidates = await query.ToListAsync(cancellationToken);
 
-        return candidates
+        var todaysSchedules = candidates
             .Where(s => s.RunsOn(request.TravelDate))
             .OrderBy(s => s.DepartureTime)
-            .Select(s => new TripDto(s.Id, s.BusId, s.Bus.Number, s.Route.Name, s.DepartureTime, s.ArrivalTime, s.FareAmount, s.Bus.TotalSeats))
+            .ToList();
+
+        var scheduleIds = todaysSchedules.Select(s => s.Id).ToHashSet();
+
+        var soldCountByScheduleId = await _db.Tickets
+            .Where(t => scheduleIds.Contains(t.ScheduleId) && t.TravelDate == request.TravelDate && t.Status == TicketStatus.Sold)
+            .GroupBy(t => t.ScheduleId)
+            .Select(g => new { g.Key, Count = g.Count() })
+            .ToDictionaryAsync(g => g.Key, g => g.Count, cancellationToken);
+
+        return todaysSchedules
+            .Select(s => new TripDto(
+                s.Id, s.BusId, s.Bus.Number, s.Route.Name, s.DepartureTime, s.ArrivalTime, s.FareAmount,
+                s.Bus.TotalSeats, s.Bus.TotalSeats - soldCountByScheduleId.GetValueOrDefault(s.Id, 0)))
             .ToList();
     }
 }

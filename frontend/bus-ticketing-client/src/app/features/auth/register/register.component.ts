@@ -9,6 +9,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { HttpErrorResponse } from '@angular/common/http';
+import Swal from 'sweetalert2';
 import { AuthService } from '../../../core/services/auth.service';
 import { RegisterRequest } from '../../../core/models/api-models';
 import { ProblemDetails } from '../../../core/models/api-models';
@@ -190,7 +191,14 @@ export class RegisterComponent {
     this.auth.register(request).subscribe({
       next: () => {
         this.submitting.set(false);
-        this.router.navigate(['/my-tickets']);
+        Swal.fire({
+          icon: 'success',
+          title: 'Account Created!',
+          text: 'Your account has been successfully created. Welcome to BusTicketing!',
+          confirmButtonColor: '#1a73e8',
+        }).then(() => {
+          this.router.navigate(['/home']);
+        });
       },
       error: (error: HttpErrorResponse) => {
         this.submitting.set(false);

@@ -50,7 +50,7 @@ public static class DataSeeder
             buses.Add(await GetOrCreateBusAsync(db, $"Bus-{i}", $"DHK-METRO-{1000 + i}", "Green Line Paribahan"));
         await db.SaveChangesAsync();
 
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var today = DateOnly.FromDateTime(DateTime.Now);
         var departure = new TimeOnly(7, 0);
         var arrival = new TimeOnly(13, 0);
 

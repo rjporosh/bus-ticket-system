@@ -45,12 +45,16 @@ export class AuthService {
 
   logout(): void {
     const refreshToken = this._refreshToken();
+    const accessToken = this._accessToken();
+
+    if (refreshToken && accessToken) {
+      this.http.post(`${environment.apiBaseUrl}/auth/logout`, { refreshToken }, {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      }).subscribe({ error: () => void 0 });
+    }
+
     this.clearSession();
     this.router.navigate(['/home']);
-
-    if (refreshToken) {
-      this.http.post(`${environment.apiBaseUrl}/auth/logout`, { refreshToken }).subscribe({ error: () => void 0 });
-    }
   }
 
   getRefreshTokenValue(): string | null {

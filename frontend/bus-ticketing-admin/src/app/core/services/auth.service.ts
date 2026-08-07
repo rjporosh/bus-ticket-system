@@ -46,14 +46,16 @@ export class AuthService {
 
   logout(): void {
     const refreshToken = this._refreshToken();
+    const accessToken = this._accessToken();
+
+    if (refreshToken && accessToken) {
+      this.http.post(`${environment.apiBaseUrl}/auth/logout`, { refreshToken }, {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      }).subscribe({ error: () => void 0 });
+    }
+
     this.clearSession();
     this.router.navigate(['/login']);
-
-    if (refreshToken) {
-      // Fire-and-forget: the user is already logged out client-side regardless of
-      // whether the server-side revoke call succeeds.
-      this.http.post(`${environment.apiBaseUrl}/auth/logout`, { refreshToken }).subscribe({ error: () => void 0 });
-    }
   }
 
   getRefreshTokenValue(): string | null {

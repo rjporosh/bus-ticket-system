@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { ApiService } from '../../core/services/api.service';
@@ -61,6 +61,45 @@ import { TripDto } from '../../core/models/api-models';
           </div>
         </div>
       </section>
+
+      <section class="featured-trips" *ngIf="featuredTrips().length > 0">
+        <h2>Featured Trips Today</h2>
+        <div class="trip-list">
+          <div class="trip-card" *ngFor="let trip of featuredTrips()">
+            <div class="trip-header">
+              <div class="route-info">
+                <span class="route">{{ trip.routeName }}</span>
+              </div>
+              <div class="trip-date">Today</div>
+            </div>
+            <div class="trip-body">
+              <div class="trip-detail">
+                <span class="label">Bus</span>
+                <span class="value">{{ trip.busNumber }}</span>
+              </div>
+              <div class="trip-detail">
+                <span class="label">Available Seats</span>
+                <span class="value">{{ trip.availableSeats }} / {{ trip.totalSeats }}</span>
+              </div>
+              <div class="trip-detail">
+                <span class="label">Departure</span>
+                <span class="value">{{ trip.departureTime }}</span>
+              </div>
+              <div class="trip-detail">
+                <span class="label">Arrival</span>
+                <span class="value">{{ trip.arrivalTime }}</span>
+              </div>
+              <div class="trip-detail">
+                <span class="label">Fare</span>
+                <span class="value price">৳{{ trip.fareAmount | number:'1.2-2' }}</span>
+              </div>
+            </div>
+            <div class="trip-footer">
+              <a mat-raised-button color="accent" [routerLink]="['/search']">View Details</a>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   `,
   styles: [`
@@ -82,15 +121,39 @@ import { TripDto } from '../../core/models/api-models';
     .step { text-align: center; padding: 1.5rem; }
     .step-number { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; background: #1a73e8; color: white; border-radius: 50%; font-weight: 700; margin-bottom: 1rem; }
     .step h4 { margin-bottom: 0.5rem; color: #333; }
-    @media (max-width: 768px) { .hero h1 { font-size: 1.75rem; } }
+    .featured-trips { max-width: 1000px; margin: 4rem auto; padding: 0 2rem; }
+    .featured-trips h2 { text-align: center; margin-bottom: 2rem; color: #333; }
+    .trip-list { display: flex; flex-direction: column; gap: 1rem; }
+    .trip-card { background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); padding: 1.5rem; }
+    .trip-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid #eee; }
+    .route-info { display: flex; align-items: center; gap: 0.5rem; font-size: 1.1rem; }
+    .route { font-weight: 600; color: #333; }
+    .trip-date { color: #666; }
+    .trip-body { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem; margin-bottom: 1rem; }
+    .trip-detail { display: flex; flex-direction: column; }
+    .label { font-size: 0.875rem; color: #666; margin-bottom: 0.25rem; }
+    .value { font-weight: 500; color: #333; }
+    .value.price { color: #1a73e8; font-size: 1.1rem; font-weight: 600; }
+    .trip-footer { display: flex; justify-content: flex-end; padding-top: 1rem; border-top: 1px solid #eee; }
+    @media (max-width: 768px) {
+      .hero h1 { font-size: 1.75rem; }
+    }
   `]
 })
 export class HomeComponent implements OnInit {
-  featuredTrips: TripDto[] = [];
+  featuredTrips = signal<TripDto[]>([]);
 
   constructor(private api: ApiService) {}
 
   ngOnInit(): void {
-    // Optionally load featured trips from API
+    const today = new Date().toISOString().slice(0, 10);
+    this.api.get<TripDto[]>('/schedules/trips', { travelDate: today }).subscribe({
+      next: (trips) => {
+        this.featuredTrips.set(Array.isArray(trips) ? trips.slice(0, 5) : []);
+      },
+      error: () => {
+        this.featuredTrips.set([]);
+      }
+    });
   }
 }

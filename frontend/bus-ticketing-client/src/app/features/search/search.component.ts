@@ -45,28 +45,28 @@ import { TripDto } from '../../core/models/api-models';
               </div>
               <div class="trip-date">{{ searchForm.value.travelDate | date:'mediumDate' }}</div>
             </div>
-            <div class="trip-body">
-              <div class="trip-detail">
-                <span class="label">Bus</span>
-                <span class="value">{{ trip.busNumber }}</span>
+              <div class="trip-body">
+                <div class="trip-detail">
+                  <span class="label">Bus</span>
+                  <span class="value">{{ trip.busNumber }}</span>
+                </div>
+                <div class="trip-detail">
+                  <span class="label">Available Seats</span>
+                  <span class="value">{{ trip.availableSeats }} / {{ trip.totalSeats }}</span>
+                </div>
+                <div class="trip-detail">
+                  <span class="label">Departure</span>
+                  <span class="value">{{ trip.departureTime }}</span>
+                </div>
+                <div class="trip-detail">
+                  <span class="label">Arrival</span>
+                  <span class="value">{{ trip.arrivalTime }}</span>
+                </div>
+                <div class="trip-detail">
+                  <span class="label">Fare</span>
+                  <span class="value price">৳{{ trip.fareAmount | number:'1.2-2' }}</span>
+                </div>
               </div>
-              <div class="trip-detail">
-                <span class="label">Departure</span>
-                <span class="value">{{ trip.departureTime }}</span>
-              </div>
-              <div class="trip-detail">
-                <span class="label">Arrival</span>
-                <span class="value">{{ trip.arrivalTime }}</span>
-              </div>
-              <div class="trip-detail">
-                <span class="label">Fare</span>
-                <span class="value price">৳{{ trip.fareAmount | number:'1.2-2' }}</span>
-              </div>
-              <div class="trip-detail">
-                <span class="label">Seats</span>
-                <span class="value">{{ trip.totalSeats }}</span>
-              </div>
-            </div>
             <div class="trip-footer">
               <button mat-raised-button color="accent" [routerLink]="['/booking', trip.scheduleId]">Select Seats</button>
             </div>

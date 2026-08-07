@@ -7,6 +7,7 @@ export interface TripDto {
   arrivalTime: string;
   fareAmount: number;
   totalSeats: number;
+  availableSeats: number;
 }
 
 export interface TripDetailDto extends TripDto {
