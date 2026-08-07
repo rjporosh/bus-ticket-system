@@ -6,7 +6,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { ApiService } from '../../core/services/api.service';
-import { TripDto, SeatDto, BookingRequest, TicketDto } from '../../core/models/api-models';
+import { TripDetailDto, BookingRequest } from '../../core/models/api-models';
 
 @Component({
   selector: 'app-booking',
@@ -110,7 +110,7 @@ import { TripDto, SeatDto, BookingRequest, TicketDto } from '../../core/models/a
   `]
 })
 export class BookingComponent implements OnInit {
-  trip = signal<TripDto | null>(null);
+  trip = signal<TripDetailDto | null>(null);
   selectedSeats = signal<string[]>([]);
   bookingForm: FormGroup;
   loading = signal(false);
@@ -133,11 +133,11 @@ export class BookingComponent implements OnInit {
     if (tripId) {
       // In real app, fetch trip by ID from API
       this.trip.set({
-        tripId, scheduleId: '1', busId: '1', busName: 'Green Line', busType: 'AC',
+        tripId, scheduleId: '1', busId: '1', busNumber: 'BUS-01', busName: 'Green Line', busType: 'AC',
         routeId: '1', routeName: 'Dhaka-Chittagong', fromStationName: 'Dhaka', toStationName: 'Chittagong',
         departureTime: '08:00', arrivalTime: '14:00', travelDate: new Date().toISOString().split('T')[0],
         fareAmount: 1200, availableSeats: 15, totalSeats: 40, status: 'Active'
-      } as TripDto);
+      });
     }
   }
 

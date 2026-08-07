@@ -64,8 +64,7 @@ try
     {
         options.AddPolicy("AllowConfiguredOrigins", policy =>
         {
-            var origins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
-            policy.WithOrigins(origins).AllowAnyHeader().AllowAnyMethod();
+            policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
         });
     });
 

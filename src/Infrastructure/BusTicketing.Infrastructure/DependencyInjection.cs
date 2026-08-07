@@ -29,7 +29,8 @@ public static class DependencyInjection
         {
             if (inTesting)
             {
-                options.UseInMemoryDatabase("BusTicketingTesting");
+                var testingDatabaseName = configuration.GetValue("Database:TestingDatabaseName", "BusTicketingTesting");
+                options.UseInMemoryDatabase(testingDatabaseName);
             }
             else
             {

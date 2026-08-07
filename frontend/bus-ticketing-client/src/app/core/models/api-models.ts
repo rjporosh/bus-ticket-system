@@ -9,6 +9,18 @@ export interface TripDto {
   totalSeats: number;
 }
 
+export interface TripDetailDto extends TripDto {
+  tripId: string;
+  busName: string;
+  busType: string;
+  routeId: string;
+  fromStationName: string;
+  toStationName: string;
+  travelDate: string;
+  availableSeats: number;
+  status: string;
+}
+
 export interface StationDto {
   id: string;
   name: string;

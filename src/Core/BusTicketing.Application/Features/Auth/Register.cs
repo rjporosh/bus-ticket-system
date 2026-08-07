@@ -90,7 +90,8 @@ public class RegisterCommandHandler : IRequestHandler<RegisterCommand, Result<Au
         var refreshTokenValue = _jwtTokenService.GenerateRefreshToken();
         var refreshTokenExpiresAt = _dateTime.UtcNow.AddDays(_jwtSettings.RefreshTokenExpiryDays);
 
-        user.IssueRefreshToken(refreshTokenValue, refreshTokenExpiresAt);
+        var refreshToken = RefreshToken.Create(user.Id, refreshTokenValue, refreshTokenExpiresAt);
+        _db.RefreshTokens.Add(refreshToken);
         await _db.SaveChangesAsync(cancellationToken);
 
         await _auditLog.LogAsync("Register", nameof(User), user.Id.ToString(), cancellationToken: cancellationToken);

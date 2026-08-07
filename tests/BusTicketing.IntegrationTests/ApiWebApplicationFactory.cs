@@ -23,6 +23,7 @@ public class ApiWebApplicationFactory : WebApplicationFactory<Program>
             {
                 ["SeedData:Enabled"] = "false",
                 ["Database:Testing"] = "true",
+                ["Database:TestingDatabaseName"] = _databaseName,
                 ["Jwt:Secret"] = "integration-test-secret-key-at-least-32-characters-long",
                 ["Jwt:Issuer"] = "BusTicketingSystem.Tests",
                 ["Jwt:Audience"] = "BusTicketingSystem.Tests.Clients"
@@ -30,7 +31,8 @@ public class ApiWebApplicationFactory : WebApplicationFactory<Program>
         });
 
         // The Infrastructure DI handles the InMemory provider selection based on
-        // Database:Testing=true; no need to re-register ApplicationDbContext here.
-        _ = _databaseName;
+        // Database:Testing=true and uses Database:TestingDatabaseName to keep each
+        // factory's database isolated (xUnit runs test classes in parallel, so a
+        // shared hardcoded name caused cross-factory data races).
     }
 }

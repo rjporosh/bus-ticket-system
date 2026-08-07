@@ -1,5 +1,6 @@
 using BusTicketing.Application.Common.Interfaces;
 using BusTicketing.Application.Common.Models;
+using BusTicketing.Domain.Entities;
 using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -69,7 +70,9 @@ public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, R
         var newRefreshTokenExpiresAt = _dateTime.UtcNow.AddDays(_jwtSettings.RefreshTokenExpiryDays);
 
         existingToken.Revoke(newRefreshTokenValue);
-        user.IssueRefreshToken(newRefreshTokenValue, newRefreshTokenExpiresAt);
+
+        var newRefreshToken = RefreshToken.Create(user.Id, newRefreshTokenValue, newRefreshTokenExpiresAt);
+        _db.RefreshTokens.Add(newRefreshToken);
 
         var accessToken = _jwtTokenService.GenerateAccessToken(user);
 
