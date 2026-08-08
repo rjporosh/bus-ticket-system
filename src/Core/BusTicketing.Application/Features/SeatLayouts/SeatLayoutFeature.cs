@@ -7,9 +7,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BusTicketing.Application.Features.SeatLayouts;
 
-public record SeatDto(Guid Id, string SeatNumber, string RowLabel, int ColumnNumber, SeatClass Class, bool IsActive);
+public record SeatDto(Guid Id, string SeatNumber, string RowLabel, int ColumnNumber, SeatClass Class, bool IsActive, bool IsDriver = false, int? VisualRow = null, int? VisualCol = null);
 
-public record SeatLayoutDto(Guid Id, Guid BusId, string BusNumber, int Rows, int Columns, List<SeatDto> Seats);
+public record SeatLayoutDto(Guid Id, Guid BusId, string BusNumber, int Rows, int Columns, LayoutType LayoutType, string? LayoutConfigJson, List<SeatDto> Seats);
 
 public record GetSeatLayoutByBusIdQuery(Guid BusId) : IRequest<Result<SeatLayoutDto>>;
 
@@ -31,10 +31,10 @@ public class GetSeatLayoutByBusIdQueryHandler : IRequestHandler<GetSeatLayoutByB
 
         var seats = layout.Seats
             .OrderBy(s => s.RowLabel).ThenBy(s => s.ColumnNumber)
-            .Select(s => new SeatDto(s.Id, s.SeatNumber, s.RowLabel, s.ColumnNumber, s.Class, s.IsActive))
+            .Select(s => new SeatDto(s.Id, s.SeatNumber, s.RowLabel, s.ColumnNumber, s.Class, s.IsActive, s.IsDriver))
             .ToList();
 
-        return Result.Success(new SeatLayoutDto(layout.Id, bus.Id, bus.Number, layout.Rows, layout.Columns, seats));
+        return Result.Success(new SeatLayoutDto(layout.Id, bus.Id, bus.Number, layout.Rows, layout.Columns, layout.LayoutType, layout.LayoutConfigJson, seats));
     }
 }
 

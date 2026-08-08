@@ -196,6 +196,9 @@ export interface SeatAvailabilityDto {
   class: SeatClass;
   isInService: boolean;
   isSold: boolean;
+  isDriver?: boolean;
+  visualRow?: number;
+  visualCol?: number;
 }
 
 export interface TicketDto {

@@ -42,3 +42,9 @@ public enum DayOfWeekFlag
     Sunday = 1 << 6,
     Daily = Monday | Tuesday | Wednesday | Thursday | Friday | Saturday | Sunday
 }
+
+public enum LayoutType
+{
+    StandardGrid = 0,
+    RealBus = 1
+}

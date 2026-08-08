@@ -1,5 +1,6 @@
 using BusTicketing.Application.Common.Interfaces;
 using BusTicketing.Application.Common.Models;
+using BusTicketing.Domain.Entities;
 using BusTicketing.Domain.Enums;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -32,10 +33,40 @@ public class GetAvailableSeatsQueryHandler : IRequestHandler<GetAvailableSeatsQu
 
         var soldSet = soldSeatIds.ToHashSet();
 
-        var result = layout.Seats
+        var seats = layout.Seats
             .OrderBy(s => s.RowLabel).ThenBy(s => s.ColumnNumber)
-            .Select(s => new SeatAvailabilityDto(s.Id, s.SeatNumber, s.RowLabel, s.ColumnNumber, s.Class, s.IsActive, soldSet.Contains(s.Id)))
             .ToList();
+
+        var result = new List<SeatAvailabilityDto>();
+        int visualRow = 0;
+        int visualCol = 0;
+
+        if (layout.LayoutType == LayoutType.RealBus && !string.IsNullOrWhiteSpace(layout.LayoutConfigJson))
+        {
+            var config = System.Text.Json.JsonSerializer.Deserialize<RealBusConfig>(layout.LayoutConfigJson) ?? new RealBusConfig();
+            var rowSeats = config.SeatsPerRow ?? new List<RowSeatGroup>();
+            
+            foreach (var seat in seats)
+            {
+                var isDriver = seat.IsDriver;
+                if (isDriver)
+                {
+                    result.Add(new SeatAvailabilityDto(seat.Id, seat.SeatNumber, seat.RowLabel, seat.ColumnNumber, seat.Class, seat.IsActive, soldSet.Contains(seat.Id), true, visualRow, visualCol));
+                }
+                else
+                {
+                    result.Add(new SeatAvailabilityDto(seat.Id, seat.SeatNumber, seat.RowLabel, seat.ColumnNumber, seat.Class, seat.IsActive, soldSet.Contains(seat.Id), false, visualRow, visualCol));
+                }
+                visualCol++;
+            }
+        }
+        else
+        {
+            foreach (var seat in seats)
+            {
+                result.Add(new SeatAvailabilityDto(seat.Id, seat.SeatNumber, seat.RowLabel, seat.ColumnNumber, seat.Class, seat.IsActive, soldSet.Contains(seat.Id)));
+            }
+        }
 
         return Result.Success(result);
     }

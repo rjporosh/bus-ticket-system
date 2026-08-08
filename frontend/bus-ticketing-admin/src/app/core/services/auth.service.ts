@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { Observable, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { AuthResponse, UserSummary } from '../models/api-models';
+import { API_ENDPOINTS } from '../config/api-endpoints';
 
 const ACCESS_TOKEN_KEY = 'bts.accessToken';
 const REFRESH_TOKEN_KEY = 'bts.refreshToken';
@@ -33,14 +34,14 @@ export class AuthService {
 
   login(username: string, password: string): Observable<AuthResponse> {
     return this.http
-      .post<AuthResponse>(`${environment.apiBaseUrl}/auth/login`, { username, password })
+      .post<AuthResponse>(`${environment.apiBaseUrl}${API_ENDPOINTS.auth.login}`, { username, password })
       .pipe(tap((response) => this.setSession(response)));
   }
 
   refresh(): Observable<AuthResponse> {
     const refreshToken = this._refreshToken();
     return this.http
-      .post<AuthResponse>(`${environment.apiBaseUrl}/auth/refresh`, { refreshToken })
+      .post<AuthResponse>(`${environment.apiBaseUrl}${API_ENDPOINTS.auth.refresh}`, { refreshToken })
       .pipe(tap((response) => this.setSession(response)));
   }
 
@@ -49,7 +50,7 @@ export class AuthService {
     const accessToken = this._accessToken();
 
     if (refreshToken && accessToken) {
-      this.http.post(`${environment.apiBaseUrl}/auth/logout`, { refreshToken }, {
+      this.http.post(`${environment.apiBaseUrl}${API_ENDPOINTS.auth.logout}`, { refreshToken }, {
         headers: { Authorization: `Bearer ${accessToken}` }
       }).subscribe({ error: () => void 0 });
     }

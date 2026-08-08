@@ -1,0 +1,374 @@
+{
+  "info": {
+    "_postman_id": "bts-collection-20260809",
+    "name": "Bus Ticketing System API",
+    "description": "Complete API collection with multi-role token management. Set x-role header to 'admin', 'staff', or 'customer' to trigger auto-login.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{admin_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080/api/v1" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login - Admin",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "x-role", "value": "admin" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"username\": \"{{admin_username}}\",\n  \"password\": \"{{admin_password}}\"\n}" },
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] },
+            "event": [
+              { "listen": "test", "script": { "exec": ["pm.test('Status is 200', () => pm.expect(pm.response.code).to.eq(200));", "pm.test('Has accessToken', () => pm.expect(pm.response.json()).to.have.property('accessToken'));"], "type": "text/javascript" } }
+            ]
+          }
+        },
+        {
+          "name": "Login - Staff",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "x-role", "value": "staff" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"username\": \"{{staff_username}}\",\n  \"password\": \"{{staff_password}}\"\n}" },
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] }
+          }
+        },
+        {
+          "name": "Login - Customer",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "x-role", "value": "customer" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"username\": \"{{customer_username}}\",\n  \"password\": \"{{customer_password}}\"\n}" },
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] }
+          }
+        },
+        {
+          "name": "Register Customer",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"username\": \"newuser123\",\n  \"email\": \"new@example.com\",\n  \"password\": \"NewPass@123\",\n  \"fullName\": \"New User\"\n}" },
+            "url": { "raw": "{{baseUrl}}/auth/register", "host": ["{{baseUrl}}"], "path": ["auth", "register"] }
+          }
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"refreshToken\": \"{{refresh_token}}\"\n}" },
+            "url": { "raw": "{{baseUrl}}/auth/refresh", "host": ["{{baseUrl}}"], "path": ["auth", "refresh"] }
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"refreshToken\": \"{{refresh_token}}\"\n}" },
+            "url": { "raw": "{{baseUrl}}/auth/logout", "host": ["{{baseUrl}}"], "path": ["auth", "logout"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Stations",
+      "item": [
+        {
+          "name": "List Stations",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": { "raw": "{{baseUrl}}/stations?pageNumber=1&pageSize=20", "host": ["{{baseUrl}}"], "path": ["stations"], "query": [{ "key": "pageNumber", "value": "1" }, { "key": "pageSize", "value": "20" }] }
+          }
+        },
+        {
+          "name": "Create Station",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" },
+              { "key": "x-resource-type", "value": "station_id" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"New Terminal\",\n  \"city\": \"Dhaka\",\n  \"address\": \"Some address\"\n}" },
+            "url": { "raw": "{{baseUrl}}/stations", "host": ["{{baseUrl}}"], "path": ["stations"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Routes",
+      "item": [
+        {
+          "name": "List Routes",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": { "raw": "{{baseUrl}}/routes", "host": ["{{baseUrl}}"], "path": ["routes"] }
+          }
+        },
+        {
+          "name": "Create Route",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" },
+              { "key": "x-resource-type", "value": "route_id" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Test Route\",\n  \"originStationId\": \"{{station_id}}\",\n  \"destinationStationId\": \"{{station_id}}\",\n  \"distanceKm\": 100,\n  \"estimatedDurationMinutes\": 120\n}" },
+            "url": { "raw": "{{baseUrl}}/routes", "host": ["{{baseUrl}}"], "path": ["routes"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Buses",
+      "item": [
+        {
+          "name": "List Buses",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": { "raw": "{{baseUrl}}/buses", "host": ["{{baseUrl}}"], "path": ["buses"] }
+          }
+        },
+        {
+          "name": "Create Bus",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" },
+              { "key": "x-resource-type", "value": "bus_id" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"number\": \"BUS-999\",\n  \"registrationNumber\": \"DHK-TEST-999\",\n  \"operatorName\": \"Test Operator\",\n  \"totalSeats\": 40\n}" },
+            "url": { "raw": "{{baseUrl}}/buses", "host": ["{{baseUrl}}"], "path": ["buses"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Schedules",
+      "item": [
+        {
+          "name": "List Schedules",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": { "raw": "{{baseUrl}}/schedules", "host": ["{{baseUrl}}"], "path": ["schedules"] }
+          }
+        },
+        {
+          "name": "Create Schedule",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" },
+              { "key": "x-resource-type", "value": "schedule_id" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"busId\": \"{{bus_id}}\",\n  \"routeId\": \"{{route_id}}\",\n  \"departureTime\": \"08:00:00\",\n  \"arrivalTime\": \"13:00:00\",\n  \"daysOfWeek\": 127,\n  \"effectiveFrom\": \"2026-08-09\",\n  \"fareAmount\": 800\n}" },
+            "url": { "raw": "{{baseUrl}}/schedules", "host": ["{{baseUrl}}"], "path": ["schedules"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Trips",
+      "item": [
+        {
+          "name": "Search Trips",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": { "raw": "{{baseUrl}}/schedules/trips?travelDate=2026-08-09", "host": ["{{baseUrl}}"], "path": ["schedules", "trips"], "query": [{ "key": "travelDate", "value": "2026-08-09" }] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Booking",
+      "item": [
+        {
+          "name": "Get Available Seats",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": { "raw": "{{baseUrl}}/booking/schedules/{{schedule_id}}/seats?travelDate=2026-08-09", "host": ["{{baseUrl}}"], "path": ["booking", "schedules", "{{schedule_id}}", "seats"], "query": [{ "key": "travelDate", "value": "2026-08-09" }] }
+          }
+        },
+        {
+          "name": "Sell Ticket",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{staff_token}}" },
+              { "key": "x-expected-schema", "value": "TicketDto" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"scheduleId\": \"{{schedule_id}}\",\n  \"seatId\": \"{{seat_id}}\",\n  \"travelDate\": \"2026-08-09\",\n  \"passengerName\": \"John Doe\",\n  \"mobileNumber\": \"01700000000\",\n  \"fareAmount\": 800,\n  \"paymentMethod\": 0\n}" },
+            "url": { "raw": "{{baseUrl}}/booking/tickets", "host": ["{{baseUrl}}"], "path": ["booking", "tickets"] }
+          }
+        },
+        {
+          "name": "Search Tickets",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{staff_token}}" }],
+            "url": { "raw": "{{baseUrl}}/booking/tickets?pageNumber=1&pageSize=20", "host": ["{{baseUrl}}"], "path": ["booking", "tickets"], "query": [{ "key": "pageNumber", "value": "1" }, { "key": "pageSize", "value": "20" }] }
+          }
+        },
+        {
+          "name": "My Tickets (Customer)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{customer_token}}" }],
+            "url": { "raw": "{{baseUrl}}/booking/my-tickets", "host": ["{{baseUrl}}"], "path": ["booking", "my-tickets"] }
+          }
+        },
+        {
+          "name": "Cancel Ticket",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{staff_token}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"reason\": \"Customer request\"\n}" },
+            "url": { "raw": "{{baseUrl}}/booking/tickets/{{ticket_id}}/cancel", "host": ["{{baseUrl}}"], "path": ["booking", "tickets", "{{ticket_id}}", "cancel"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Dashboard",
+      "item": [
+        {
+          "name": "Get Dashboard Summary",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": { "raw": "{{baseUrl}}/dashboard/summary?date=2026-08-09", "host": ["{{baseUrl}}"], "path": ["dashboard", "summary"], "query": [{ "key": "date", "value": "2026-08-09" }] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "List Users",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": { "raw": "{{baseUrl}}/users", "host": ["{{baseUrl}}"], "path": ["users"] }
+          }
+        },
+        {
+          "name": "Create User",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"username\": \"newuser\",\n  \"email\": \"new@example.com\",\n  \"fullName\": \"New User\",\n  \"roleId\": \"{{role_id}}\"\n}" },
+            "url": { "raw": "{{baseUrl}}/users", "host": ["{{baseUrl}}"], "path": ["users"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Roles",
+      "item": [
+        {
+          "name": "List Roles",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": { "raw": "{{baseUrl}}/roles", "host": ["{{baseUrl}}"], "path": ["roles"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Payments",
+      "item": [
+        {
+          "name": "List Payments",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": { "raw": "{{baseUrl}}/payments", "host": ["{{baseUrl}}"], "path": ["payments"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Release",
+      "item": [
+        {
+          "name": "Get Current Release",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/release/current", "host": ["{{baseUrl}}"], "path": ["release", "current"] }
+          }
+        },
+        {
+          "name": "Get Release Notes (Markdown)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/release/notes", "host": ["{{baseUrl}}"], "path": ["release", "notes"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Live",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "http://localhost:8080/health/live", "host": ["localhost:8080"], "path": ["health", "live"] }
+          }
+        },
+        {
+          "name": "Ready",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "http://localhost:8080/health/ready", "host": ["localhost:8080"], "path": ["health", "ready"] }
+          }
+        }
+      ]
+    }
+  ]
+}

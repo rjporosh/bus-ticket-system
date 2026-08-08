@@ -8,28 +8,29 @@ import {
   SellTicketRequest,
   SellTicketsRequest,
 } from '../models/api-models';
+import { API_ENDPOINTS } from '../config/api-endpoints';
 
 @Injectable({ providedIn: 'root' })
 export class BookingService {
   constructor(private readonly api: ApiService) {}
 
   getAvailableSeats(scheduleId: string, travelDate: string): Observable<SeatAvailabilityDto[]> {
-    return this.api.get(`/booking/schedules/${scheduleId}/seats`, { travelDate });
+    return this.api.get(API_ENDPOINTS.booking.availableSeats(scheduleId), { travelDate });
   }
 
   sellTicket(body: SellTicketRequest): Observable<TicketDto> {
-    return this.api.post('/booking/tickets', body);
+    return this.api.post(API_ENDPOINTS.booking.sellTicket, body);
   }
 
   sellTickets(body: SellTicketsRequest): Observable<TicketDto[]> {
-    return this.api.post('/booking/tickets/batch', body);
+    return this.api.post(API_ENDPOINTS.booking.sellTickets, body);
   }
 
   cancelTicket(ticketId: string, reason: string): Observable<TicketDto> {
-    return this.api.post(`/booking/tickets/${ticketId}/cancel`, { reason });
+    return this.api.post(API_ENDPOINTS.booking.cancelTicket(ticketId), { reason });
   }
 
   search(query: QueryParams): Observable<PaginatedList<TicketDto>> {
-    return this.api.get('/booking/tickets', query);
+    return this.api.get(API_ENDPOINTS.booking.search, query);
   }
 }

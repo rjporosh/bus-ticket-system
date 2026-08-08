@@ -74,3 +74,31 @@ full implementation.
 - Ticket-number generation moved from a COUNT-based query to a DB sequence per
   date, closing the narrow race condition documented in `SellTicket.cs`.
 - Standard security headers (HSTS, X-Content-Type-Options, etc.) explicitly configured.
+
+## Phase 4: Production hardening + SQA enablement — ✅ delivered
+
+Database artifacts, release tracking, configurable real-bus seat layout, Postman collection, and enterprise-grade developer documentation. See `release/new-release.md` for the line-by-line feature checklist and `git log` for the exact commits.
+
+### Database artifacts
+- Versioned SQL in `database/` (schema, stored procedures, functions, views, triggers, seed data)
+- Monthly versioning under `database/2026/august/`
+- Standardized header block on every artifact: creation date, modified date, reason, developer, context, API/cron/service, DB provider
+
+### Release tracking
+- `GET /api/v1/release/current` — public endpoint for SQA to see what was built and bugs resolved
+- `GET /api/v1/release/notes` — raw markdown of release notes
+- `release/new-release.md` — single source of truth
+
+### Configurable real-bus seat layout
+- Backend: `SeatLayout.LayoutType` (`StandardGrid` | `RealBus`) + `LayoutConfigJson`
+- Frontend client: real-bus-shaped seat grid with driver seat, aisle gap, and configurable left/right groups
+- Existing data defaults to `StandardGrid` — no breaking change
+
+### Postman collection
+- `docs/postman-scripts/` with environments, pre-request scripts (auto-login per role), post-response scripts, and example requests for every endpoint
+
+### Documentation
+- `docs/AI-HANDOVER.md` — context for next AI/agent session
+- `docs/FRONTEND-CLIENT-GUIDE.md` — client app architecture and how to add a feature
+- `docs/FRONTEND-ADMIN-GUIDE.md` — admin app architecture and how to add a feature
+- `docs/BACKEND-GUIDE.md` — how to add a CRUD endpoint, background service, or cron job

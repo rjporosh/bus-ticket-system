@@ -1,4 +1,5 @@
 using BusTicketing.Domain.Entities;
+using BusTicketing.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -38,6 +39,9 @@ public class SeatLayoutConfiguration : IEntityTypeConfiguration<SeatLayout>
 
         builder.HasIndex(l => l.BusId).IsUnique();
 
+        builder.Property(l => l.LayoutType).HasDefaultValue(LayoutType.StandardGrid);
+        builder.Property(l => l.LayoutConfigJson).HasMaxLength(2000);
+
         builder.HasMany(l => l.Seats)
             .WithOne()
             .HasForeignKey(s => s.SeatLayoutId)
@@ -57,6 +61,7 @@ public class SeatConfiguration : IEntityTypeConfiguration<Seat>
 
         builder.Property(s => s.SeatNumber).HasMaxLength(10).IsRequired();
         builder.Property(s => s.RowLabel).HasMaxLength(2).IsRequired();
+        builder.Property(s => s.IsDriver).HasDefaultValue(false);
 
         builder.HasIndex(s => new { s.SeatLayoutId, s.SeatNumber }).IsUnique();
 

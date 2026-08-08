@@ -33,7 +33,10 @@ public record SeatAvailabilityDto(
     int ColumnNumber,
     SeatClass Class,
     bool IsInService,
-    bool IsSold);
+    bool IsSold,
+    bool IsDriver = false,
+    int? VisualRow = null,
+    int? VisualCol = null);
 
 public record DashboardSummaryDto(
     DateOnly Date,

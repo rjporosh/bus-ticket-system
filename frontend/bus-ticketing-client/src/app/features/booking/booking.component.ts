@@ -119,6 +119,33 @@ import {
           </form>
         </div>
       </div>
+
+      <div class="seat-map-section" *ngIf="seats().length > 0">
+        <h3>Select Seats</h3>
+        <div class="bus-layout" [class.real-bus]="hasRealBusLayout()">
+          <div class="seat-grid">
+            <div *ngFor="let seat of seats()"
+                 class="seat-cell"
+                 [class.driver-seat]="seat.isDriver"
+                 [class.sold]="seat.isSold"
+                 [class.out-of-service]="!seat.isInService"
+                 [class.selected]="isSelected(seat)"
+                 [style.grid-row]="getVisualRow(seat)"
+                 [style.grid-column]="getVisualCol(seat)"
+                 (click)="toggleSeat(seat)">
+              <span class="seat-label" *ngIf="!seat.isDriver">{{ seat.seatNumber }}</span>
+              <span class="driver-icon" *ngIf="seat.isDriver">&#x1F69A;</span>
+            </div>
+          </div>
+          <div class="seat-legend">
+            <span class="legend-item"><span class="legend-box available"></span> Available</span>
+            <span class="legend-item"><span class="legend-box selected"></span> Selected</span>
+            <span class="legend-item"><span class="legend-box sold"></span> Sold</span>
+            <span class="legend-item"><span class="legend-box out-of-service"></span> Out of service</span>
+            <span class="legend-item"><span class="legend-box driver"></span> Driver</span>
+          </div>
+        </div>
+      </div>
     </div>
 
     <ng-template #noTrip>
@@ -129,7 +156,7 @@ import {
     </ng-template>
   `,
   styles: [`
-    .booking-container { max-width: 1100px; margin: 0 auto; padding: 2rem; }
+    .booking-container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
     .booking-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
     .trip-summary h2, .booking-form h3 { color: #333; margin-top: 0; }
     .summary-card { background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
@@ -147,8 +174,35 @@ import {
     .seat-chip { background: #e3f2fd; color: #1a73e8; padding: 0.25rem 0.75rem; border-radius: 4px; font-weight: 600; }
     .error-state { text-align: center; padding: 4rem 2rem; }
     .error-state p { color: #666; margin-bottom: 1.5rem; }
+
+    .seat-map-section { margin-top: 2rem; }
+    .seat-map-section h3 { color: #333; margin-bottom: 1rem; }
+    .bus-layout { background: #f5f5f5; padding: 1.5rem; border-radius: 8px; display: inline-block; }
+    .seat-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 0.5rem; }
+    .seat-cell {
+      width: 40px; height: 40px; border-radius: 6px; display: flex; align-items: center; justify-content: center;
+      font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: all 0.2s;
+      background: #fff; border: 2px solid #e0e0e0; color: #333;
+    }
+    .seat-cell:hover:not(.sold):not(.out-of-service) { border-color: #1a73e8; transform: scale(1.05); }
+    .seat-cell.selected { background: #1a73e8; color: #fff; border-color: #1a73e8; }
+    .seat-cell.sold { background: #ffebee; color: #c62828; border-color: #ffcdd2; cursor: not-allowed; }
+    .seat-cell.out-of-service { background: #f5f5f5; color: #9e9e9e; border-color: #e0e0e0; cursor: not-allowed; text-decoration: line-through; }
+    .seat-cell.driver-seat { background: #fff3e0; border-color: #ff9800; cursor: default; }
+    .driver-icon { font-size: 1.2rem; }
+    .seat-legend { margin-top: 1rem; display: flex; gap: 1.5rem; flex-wrap: wrap; }
+    .legend-item { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: #666; }
+    .legend-box { width: 16px; height: 16px; border-radius: 4px; border: 2px solid #e0e0e0; }
+    .legend-box.available { background: #fff; }
+    .legend-box.selected { background: #1a73e8; border-color: #1a73e8; }
+    .legend-box.sold { background: #ffebee; border-color: #ffcdd2; }
+    .legend-box.out-of-service { background: #f5f5f5; }
+    .legend-box.driver { background: #fff3e0; border-color: #ff9800; }
+
     @media (max-width: 768px) {
       .booking-layout { grid-template-columns: 1fr; }
+      .seat-grid { grid-template-columns: repeat(8, 1fr); }
+      .seat-cell { width: 32px; height: 32px; font-size: 0.65rem; }
     }
   `]
 })
@@ -250,6 +304,18 @@ export class BookingComponent implements OnInit {
 
   isSelected(seat: SeatAvailabilityDto): boolean {
     return this.selectedSeats().some(s => s.seatId === seat.seatId);
+  }
+
+  hasRealBusLayout(): boolean {
+    return this.seats().some(s => s.isDriver || s.visualRow !== undefined || s.visualCol !== undefined);
+  }
+
+  getVisualRow(seat: SeatAvailabilityDto): number {
+    return seat.visualRow ?? 0;
+  }
+
+  getVisualCol(seat: SeatAvailabilityDto): number {
+    return seat.visualCol ?? 0;
   }
 
   seatClassLabel(seat: SeatAvailabilityDto): string {
