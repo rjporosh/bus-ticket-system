@@ -8,7 +8,7 @@ import { ProblemDetails } from '../models/api-models';
 
 /** Attaches the bearer access token; on a 401 (expired token) attempts one silent refresh-and-retry before giving up. */
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
-  const auth = inject(AuthService);
+  const auth = inject<AuthService>(AuthService);
   const token = auth.accessToken();
 
   const anonymousAuthPaths = ['/auth/login', '/auth/register', '/auth/refresh'];
@@ -37,14 +37,14 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
 /** Tracks in-flight requests for the global top-loading-bar. */
 export const loadingInterceptor: HttpInterceptorFn = (req, next) => {
-  const loading = inject(LoadingService);
+  const loading = inject<LoadingService>(LoadingService);
   loading.start();
   return next(req).pipe(finalize(() => loading.stop()));
 };
 
 /** Surfaces API errors as toasts, using ASP.NET Core's ProblemDetails shape when available. */
 export const errorInterceptor: HttpInterceptorFn = (req, next) => {
-  const toast = inject(ToastService);
+  const toast = inject<ToastService>(ToastService);
 
   return next(req).pipe(
     catchError((error: unknown) => {
