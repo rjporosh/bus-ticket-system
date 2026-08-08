@@ -1,12 +1,12 @@
 import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { catchError, finalize, switchMap, throwError } from 'rxjs';
-import { AuthService } from '../core/services/auth.service';
-import { LoadingService } from '../core/services/loading.service';
-import { ProblemDetails } from '../core/models/api-models';
+import { AuthService } from '../services/auth.service';
+import { LoadingService } from '../services/loading.service';
+import { ProblemDetails } from '../models/api-models';
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
-  const auth = inject(AuthService);
+  const auth = inject<AuthService>(AuthService);
   const token = auth.accessToken();
 
   const anonymousAuthPaths = ['/auth/login', '/auth/register', '/auth/refresh'];
@@ -33,7 +33,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 };
 
 export const loadingInterceptor: HttpInterceptorFn = (req, next) => {
-  const loading = inject(LoadingService);
+  const loading = inject<LoadingService>(LoadingService);
   loading.start();
   return next(req).pipe(finalize(() => loading.stop()));
 };
