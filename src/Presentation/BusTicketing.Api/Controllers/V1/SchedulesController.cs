@@ -36,6 +36,16 @@ public class SchedulesController : ControllerBase
         [FromQuery] DateOnly travelDate, [FromQuery] Guid? routeId, CancellationToken cancellationToken)
         => Ok(await _sender.Send(new GetTripsForDateQuery(travelDate, routeId), cancellationToken));
 
+    /// <summary>Public: searches trips by origin/destination station and travel date.</summary>
+    [HttpGet("search/trips")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(PaginatedList<Application.Features.Schedules.TripDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<PaginatedList<Application.Features.Schedules.TripDto>>> SearchTrips(
+        [FromQuery] DateOnly travelDate, [FromQuery] Guid? originStationId, [FromQuery] Guid? destinationStationId,
+        [FromQuery] string? originStationName, [FromQuery] string? destinationStationName,
+        [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 20, CancellationToken cancellationToken = default)
+        => Ok(await _sender.Send(new SearchTripsQuery(travelDate, originStationId, destinationStationId, originStationName, destinationStationName, pageNumber, pageSize), cancellationToken));
+
     /// <summary>Public: gets a single schedule by id.</summary>
     [HttpGet("{id:guid}")]
     [AllowAnonymous]

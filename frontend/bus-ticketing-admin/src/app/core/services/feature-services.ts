@@ -14,6 +14,9 @@ import {
   TicketDto,
   TripDto,
   UserDto,
+  PaymentDto,
+  PaymentStatus,
+  PaymentMethod,
 } from '../models/api-models';
 
 @Injectable({ providedIn: 'root' })
@@ -163,6 +166,18 @@ export class BookingService {
   }
   search(query: QueryParams): Observable<PaginatedList<TicketDto>> {
     return this.api.get('/booking/tickets', query);
+  }
+  getPayments(query: QueryParams): Observable<PaginatedList<PaymentDto>> {
+    return this.api.get('/payments', query);
+  }
+  capturePayment(paymentId: string): Observable<PaymentDto> {
+    return this.api.post(`/payments/${paymentId}/capture`, {});
+  }
+  refundPayment(paymentId: string): Observable<PaymentDto> {
+    return this.api.post(`/payments/${paymentId}/refund`, {});
+  }
+  failPayment(paymentId: string): Observable<PaymentDto> {
+    return this.api.post(`/payments/${paymentId}/fail`, {});
   }
 }
 

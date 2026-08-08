@@ -2,6 +2,7 @@ using BusTicketing.Application.Common.Interfaces;
 using BusTicketing.Application.Common.Models;
 using BusTicketing.Domain.Entities;
 using BusTicketing.Domain.Enums;
+using BusTicketing.Domain.Exceptions;
 using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -146,7 +147,31 @@ public class SellTicketCommandHandler : IRequestHandler<SellTicketCommand, Resul
     private async Task<string> GenerateTicketNumberAsync(DateOnly travelDate, CancellationToken cancellationToken)
     {
         var datePart = travelDate.ToString("yyyyMMdd");
-        var countToday = await _db.Tickets.CountAsync(t => t.TravelDate == travelDate, cancellationToken);
-        return $"TKT-{datePart}-{(countToday + 1):D4}";
+        const int maxRetries = 3;
+
+        for (var attempt = 0; attempt < maxRetries; attempt++)
+        {
+            var counter = await _db.TicketNumberCounters
+                .FirstOrDefaultAsync(c => c.CounterDate == travelDate, cancellationToken);
+
+            if (counter is null)
+            {
+                counter = TicketNumberCounter.Create(travelDate);
+                _db.TicketNumberCounters.Add(counter);
+            }
+
+            var nextNumber = counter.Next();
+            try
+            {
+                await _db.SaveChangesAsync(cancellationToken);
+                return $"TKT-{datePart}-{nextNumber:D4}";
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                await Task.Delay(10, cancellationToken);
+            }
+        }
+
+        throw new BusinessRuleViolationException("Could not generate a unique ticket number due to high concurrency. Please retry.");
     }
 }

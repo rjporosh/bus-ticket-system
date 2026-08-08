@@ -5,13 +5,35 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
+import { MatSelectModule } from '@angular/material/select';
+import { MatIconModule } from '@angular/material/icon';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { ApiService } from '../../core/services/api.service';
-import { TripDetailDto, BookingRequest } from '../../core/models/api-models';
+import { TripsService } from '../../core/services/trips.service';
+import { BookingService } from '../../core/services/booking.service';
+import { ToastService } from '../../core/services/toast.service';
+import {
+  TripDto,
+  SeatAvailabilityDto,
+  TicketDto,
+  SellTicketsRequest,
+  PaymentMethod,
+  SeatClass,
+  SeatClassLabel,
+  TicketStatus,
+  TicketStatusLabel,
+} from '../../core/models/api-models';
 
 @Component({
   selector: 'app-booking',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink, MatFormFieldModule, MatInputModule, MatButtonModule],
+  imports: [
+    CommonModule, ReactiveFormsModule, RouterLink,
+    MatFormFieldModule, MatInputModule, MatButtonModule,
+    MatSelectModule, MatIconModule, MatProgressSpinnerModule,
+    MatSnackBarModule,
+  ],
   template: `
     <div class="booking-container" *ngIf="trip(); else noTrip">
       <div class="booking-layout">
@@ -20,15 +42,15 @@ import { TripDetailDto, BookingRequest } from '../../core/models/api-models';
           <div class="summary-card">
             <div class="summary-row">
               <span class="label">Route</span>
-              <span class="value">{{ trip()!.fromStationName }} → {{ trip()!.toStationName }}</span>
+              <span class="value">{{ trip()!.routeName }}</span>
             </div>
             <div class="summary-row">
               <span class="label">Bus</span>
-              <span class="value">{{ trip()!.busName }} ({{ trip()!.busType }})</span>
+              <span class="value">{{ trip()!.busNumber }}</span>
             </div>
             <div class="summary-row">
               <span class="label">Date</span>
-              <span class="value">{{ trip()!.travelDate | date:'fullDate' }}</span>
+              <span class="value">{{ travelDate() | date:'fullDate' }}</span>
             </div>
             <div class="summary-row">
               <span class="label">Departure</span>
@@ -41,6 +63,13 @@ import { TripDetailDto, BookingRequest } from '../../core/models/api-models';
             <div class="summary-row total">
               <span class="label">Total Fare</span>
               <span class="value price">৳{{ selectedSeats().length * trip()!.fareAmount | number:'1.2-2' }}</span>
+            </div>
+          </div>
+
+          <div class="selected-seats">
+            <h4>Selected Seats ({{ selectedSeats().length }})</h4>
+            <div class="seat-chips">
+              <span class="seat-chip" *ngFor="let seat of selectedSeats()">{{ seat.seatNumber }}</span>
             </div>
           </div>
         </div>
@@ -59,18 +88,32 @@ import { TripDetailDto, BookingRequest } from '../../core/models/api-models';
               <mat-error *ngIf="bookingForm.get('passengerMobile')?.hasError('required')">Mobile is required</mat-error>
             </mat-form-field>
             <mat-form-field appearance="outline" class="full-width">
-              <mat-label>Email (optional)</mat-label>
-              <input matInput formControlName="passengerEmail" type="email" placeholder="your@email.com">
+              <mat-label>Gender (optional)</mat-label>
+              <mat-select formControlName="gender">
+                <mat-option value="Male">Male</mat-option>
+                <mat-option value="Female">Female</mat-option>
+                <mat-option value="Other">Other</mat-option>
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>NID / Passport (optional)</mat-label>
+              <input matInput formControlName="nidOrPassport">
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Payment Method</mat-label>
+              <mat-select formControlName="paymentMethod">
+                <mat-option [value]="0">Cash</mat-option>
+                <mat-option [value]="1">Mock Card</mat-option>
+                <mat-option [value]="2">Mock Mobile Banking</mat-option>
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Remarks (optional)</mat-label>
+              <input matInput formControlName="remarks">
             </mat-form-field>
 
-            <div class="selected-seats">
-              <h4>Selected Seats ({{ selectedSeats().length }})</h4>
-              <div class="seat-chips">
-                <span class="seat-chip" *ngFor="let seat of selectedSeats()">{{ seat }}</span>
-              </div>
-            </div>
-
-            <button mat-raised-button color="primary" type="submit" [disabled]="bookingForm.invalid || selectedSeats().length === 0 || loading()">
+            <button mat-raised-button color="primary" type="submit"
+              [disabled]="bookingForm.invalid || selectedSeats().length === 0 || loading()">
               {{ loading() ? 'Processing...' : 'Confirm Booking' }}
             </button>
           </form>
@@ -110,53 +153,149 @@ import { TripDetailDto, BookingRequest } from '../../core/models/api-models';
   `]
 })
 export class BookingComponent implements OnInit {
-  trip = signal<TripDetailDto | null>(null);
-  selectedSeats = signal<string[]>([]);
-  bookingForm: FormGroup;
+  trip = signal<TripDto | null>(null);
+  seats = signal<SeatAvailabilityDto[]>([]);
+  selectedSeats = signal<SeatAvailabilityDto[]>([]);
+  travelDate = signal<string>('');
   loading = signal(false);
+  loadingSeats = signal(false);
+  error = signal<string | null>(null);
+
+  bookingForm: FormGroup;
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private fb: FormBuilder,
-    private api: ApiService
+    private tripsService: TripsService,
+    private bookingService: BookingService,
+    private toast: ToastService,
+    private snackBar: MatSnackBar
   ) {
-    this.bookingForm = this.fb.group({
+    this.bookingForm = this.fb.nonNullable.group({
       passengerName: ['', Validators.required],
       passengerMobile: ['', Validators.required],
-      passengerEmail: ['']
+      gender: [''],
+      nidOrPassport: [''],
+      paymentMethod: [0, Validators.required],
+      remarks: [''],
     });
   }
 
   ngOnInit(): void {
     const tripId = this.route.snapshot.paramMap.get('tripId');
+    const dateParam = this.route.snapshot.queryParamMap.get('date');
+    const travelDateStr = dateParam ? new Date(dateParam).toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
+
     if (tripId) {
-      // In real app, fetch trip by ID from API
-      this.trip.set({
-        tripId, scheduleId: '1', busId: '1', busNumber: 'BUS-01', busName: 'Green Line', busType: 'AC',
-        routeId: '1', routeName: 'Dhaka-Chittagong', fromStationName: 'Dhaka', toStationName: 'Chittagong',
-        departureTime: '08:00', arrivalTime: '14:00', travelDate: new Date().toISOString().split('T')[0],
-        fareAmount: 1200, availableSeats: 15, totalSeats: 40, status: 'Active'
-      });
+      this.travelDate.set(travelDateStr);
+      this.loadTrip(tripId, travelDateStr);
     }
   }
 
-  onSubmit(): void {
-    if (this.bookingForm.invalid || this.selectedSeats().length === 0) return;
+  private loadTrip(scheduleId: string, travelDate: string): void {
     this.loading.set(true);
-    const request: BookingRequest = {
-      tripId: this.trip()!.tripId,
-      passengerName: this.bookingForm.value.passengerName,
-      passengerMobile: this.bookingForm.value.passengerMobile,
-      passengerEmail: this.bookingForm.value.passengerEmail,
-      seatNumbers: this.selectedSeats(),
-      totalFare: this.selectedSeats().length * this.trip()!.fareAmount
+    this.error.set(null);
+
+    this.tripsService.getTripsForDate(travelDate).subscribe({
+      next: (trips) => {
+        const found = trips.find(t => t.scheduleId === scheduleId);
+        if (found) {
+          this.trip.set(found);
+          this.loadSeats(scheduleId, travelDate);
+        } else {
+          this.error.set('Trip not found for the selected date.');
+          this.loading.set(false);
+        }
+      },
+      error: () => {
+        this.error.set('Failed to load trip details.');
+        this.loading.set(false);
+      },
+    });
+  }
+
+  private loadSeats(scheduleId: string, travelDate: string): void {
+    this.loadingSeats.set(true);
+    this.bookingService.getAvailableSeats(scheduleId, travelDate).subscribe({
+      next: (seats) => {
+        this.seats.set(seats);
+        this.loadingSeats.set(false);
+        this.loading.set(false);
+      },
+      error: () => {
+        this.toast.error('Failed to load seat map.');
+        this.loadingSeats.set(false);
+        this.loading.set(false);
+      },
+    });
+  }
+
+  toggleSeat(seat: SeatAvailabilityDto): void {
+    if (seat.isSold || !seat.isInService) return;
+
+    const current = this.selectedSeats();
+    const index = current.findIndex(s => s.seatId === seat.seatId);
+    if (index >= 0) {
+      current.splice(index, 1);
+    } else {
+      if (current.length >= 10) {
+        this.toast.error('You can select up to 10 seats.');
+        return;
+      }
+      current.push(seat);
+    }
+    this.selectedSeats.set([...current]);
+  }
+
+  isSelected(seat: SeatAvailabilityDto): boolean {
+    return this.selectedSeats().some(s => s.seatId === seat.seatId);
+  }
+
+  seatClassLabel(seat: SeatAvailabilityDto): string {
+    return `${SeatClassLabel[seat.class]}${seat.isInService ? '' : ' · Out of service'}`;
+  }
+
+  onSubmit(): void {
+    if (this.bookingForm.invalid || this.selectedSeats().length === 0 || !this.trip()) return;
+
+    this.loading.set(true);
+    const value = this.bookingForm.getRawValue();
+    const trip = this.trip()!;
+    const travelDate = this.travelDate();
+    const selected = this.selectedSeats();
+
+    const request: SellTicketsRequest = {
+      scheduleId: trip.scheduleId,
+      travelDate,
+      items: selected.map(seat => ({
+        seatId: seat.seatId,
+        passengerName: value.passengerName,
+        mobileNumber: value.passengerMobile,
+        fareAmount: trip.fareAmount,
+        paymentMethod: value.paymentMethod,
+        nidOrPassport: value.nidOrPassport || undefined,
+        gender: value.gender || undefined,
+      })),
+      remarks: value.remarks || undefined,
     };
-    // TODO: Call api.post<BookingRequest, TicketDto>('/booking/tickets', request)
-    setTimeout(() => {
-      alert('Booking confirmed! Ticket: ' + Math.random().toString(36).substr(2, 9).toUpperCase());
-      this.router.navigate(['/my-tickets']);
-      this.loading.set(false);
-    }, 1000);
+
+    this.bookingService.sellTickets(request).subscribe({
+      next: (tickets) => {
+        this.loading.set(false);
+        const ticketNumbers = tickets.map(t => t.ticketNumber).join(', ');
+        this.snackBar.open(`Booking confirmed! Tickets: ${ticketNumbers}`, 'Close', { duration: 5000 });
+        this.router.navigate(['/my-tickets']);
+      },
+      error: (err) => {
+        this.loading.set(false);
+        const detail = err.error?.detail || err.error?.title || 'Could not complete booking. Please try again.';
+        this.toast.error(detail);
+        if (err.status === 409) {
+          this.loadSeats(trip.scheduleId, travelDate);
+          this.selectedSeats.set([]);
+        }
+      },
+    });
   }
 }

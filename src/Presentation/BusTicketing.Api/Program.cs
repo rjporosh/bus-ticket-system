@@ -1,13 +1,17 @@
 using Asp.Versioning;
+using BusTicketing.Api.Authorization;
 using BusTicketing.Api.Middleware;
 using BusTicketing.Application;
 using BusTicketing.Application.Common.Interfaces;
+using BusTicketing.Domain.Enums;
 using BusTicketing.Infrastructure;
 using BusTicketing.Infrastructure.Persistence;
 using BusTicketing.Infrastructure.Services;
 using HealthChecks.UI.Client;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.OpenApi;
+using Microsoft.Extensions.DependencyInjection;
 using Scalar.AspNetCore;
 using Serilog;
 
@@ -68,11 +72,23 @@ try
         });
     });
 
+    foreach (Permission permission in Enum.GetValues(typeof(Permission)))
+    {
+        builder.Services.AddAuthorization(options =>
+        {
+            options.AddPolicy($"Permission:{permission}", policy => policy.Requirements.Add(new PermissionRequirement(permission)));
+        });
+    }
+
+    builder.Services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
+
     var app = builder.Build();
 
     // ---- Pipeline ---------------------------------------------------------
     app.UseSerilogRequestLogging();
     app.UseMiddleware<GlobalExceptionMiddleware>();
+    app.UseMiddleware<RateLimitMiddleware>();
+    app.UseMiddleware<SecurityHeadersMiddleware>();
     app.UseRuntimeErrorLogger();
     app.UseGracefulShutdown();
 

@@ -22,6 +22,11 @@ import {
   TicketSearchField,
   TicketStatusLabel,
   TripDto,
+  PaymentDto,
+  PaymentStatus,
+  PaymentMethod,
+  PaymentStatusLabel,
+  PaymentMethodLabel,
 } from '../../core/models/api-models';
 
 type WizardStep = 'trip' | 'seat' | 'passenger' | 'confirmation';
@@ -311,6 +316,91 @@ type WizardStep = 'trip' | 'seat' | 'passenger' | 'confirmation';
             </div>
           </ng-template>
         </mat-tab>
+
+        <mat-tab label="Payments">
+          <ng-template matTabContent>
+            <div class="tab-body">
+              <mat-card class="card-surface step-card">
+                <form [formGroup]="paymentFilterForm" class="grid-3">
+                  <mat-form-field appearance="outline">
+                    <mat-label>Status</mat-label>
+                    <mat-select formControlName="status">
+                      <mat-option [value]="-1">All</mat-option>
+                      <mat-option [value]="0">Pending</mat-option>
+                      <mat-option [value]="1">Captured</mat-option>
+                      <mat-option [value]="2">Failed</mat-option>
+                      <mat-option [value]="3">Refunded</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                  <mat-form-field appearance="outline">
+                    <mat-label>Method</mat-label>
+                    <mat-select formControlName="method">
+                      <mat-option [value]="-1">All</mat-option>
+                      <mat-option [value]="0">Cash</mat-option>
+                      <mat-option [value]="1">Mock Card</mat-option>
+                      <mat-option [value]="2">Mock Mobile Banking</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                  <button mat-flat-button color="primary" type="button" (click)="loadPayments()">Filter</button>
+                </form>
+
+                @if (loadingPayments()) {
+                  <div class="loading-row"><mat-spinner diameter="28" /></div>
+                } @else if (payments().length > 0) {
+                  <table mat-table [dataSource]="payments()" class="mono-table">
+                    <ng-container matColumnDef="ticket">
+                      <th mat-header-cell *matHeaderCellDef>Ticket</th>
+                      <td mat-cell *matCellDef="let p"><span class="mono">{{ p.ticketNumber }}</span></td>
+                    </ng-container>
+                    <ng-container matColumnDef="passenger">
+                      <th mat-header-cell *matHeaderCellDef>Passenger</th>
+                      <td mat-cell *matCellDef="let p">{{ p.passengerName }}</td>
+                    </ng-container>
+                    <ng-container matColumnDef="amount">
+                      <th mat-header-cell *matHeaderCellDef>Amount</th>
+                      <td mat-cell *matCellDef="let p">৳{{ p.amount }}</td>
+                    </ng-container>
+                    <ng-container matColumnDef="method">
+                      <th mat-header-cell *matHeaderCellDef>Method</th>
+                      <td mat-cell *matCellDef="let p">{{ paymentMethodLabel(p.method) }}</td>
+                    </ng-container>
+                    <ng-container matColumnDef="status">
+                      <th mat-header-cell *matHeaderDef>Status</th>
+                      <td mat-cell *matCellDef="let p">
+                        <span class="board-chip" [class.board-chip--available]="p.status === 1" [class.board-chip--sold]="p.status === 0">
+                          {{ paymentStatusLabel(p.status) }}
+                        </span>
+                      </td>
+                    </ng-container>
+                    <ng-container matColumnDef="ref">
+                      <th mat-header-cell *matHeaderCellDef>Transaction Ref</th>
+                      <td mat-cell *matCellDef="let p"><span class="mono">{{ p.transactionRef }}</span></td>
+                    </ng-container>
+                    <ng-container matColumnDef="actions">
+                      <th mat-header-cell *matHeaderCellDef></th>
+                      <td mat-cell *matCellDef="let p">
+                        @if (p.status === 0) {
+                          <button mat-button (click)="capturePayment(p)" matTooltip="Capture">Capture</button>
+                        }
+                        @if (p.status === 1) {
+                          <button mat-button (click)="refundPayment(p)" matTooltip="Refund">Refund</button>
+                        }
+                        @if (p.status === 0 || p.status === 1) {
+                          <button mat-button color="warn" (click)="failPayment(p)" matTooltip="Fail">Fail</button>
+                        }
+                      </td>
+                    </ng-container>
+
+                    <tr mat-header-row *matHeaderRowDef="paymentColumns"></tr>
+                    <tr mat-row *matRowDef="let row; columns: paymentColumns"></tr>
+                  </table>
+                } @else if (paymentsLoaded()) {
+                  <p class="empty-state">No payments found.</p>
+                }
+              </mat-card>
+            </div>
+          </ng-template>
+        </mat-tab>
       </mat-tab-group>
     </div>
   `,
@@ -403,6 +493,16 @@ export class BookingComponent {
   protected readonly cancelling = signal<TicketDto | null>(null);
   protected readonly cancelReason = this.fb.nonNullable.control('');
   protected readonly searchColumns = ['ticketNumber', 'passenger', 'trip', 'date', 'status', 'actions'];
+
+  // --- Payments state ---
+  protected readonly paymentFilterForm = this.fb.nonNullable.group({
+    status: [-1],
+    method: [-1],
+  });
+  protected readonly payments = signal<PaymentDto[]>([]);
+  protected readonly loadingPayments = signal(false);
+  protected readonly paymentsLoaded = signal(false);
+  protected readonly paymentColumns = ['ticket', 'passenger', 'amount', 'method', 'status', 'ref', 'actions'];
 
   constructor() {
     this.routesService.list({ isActive: true, pageSize: 200 }).subscribe((result) => this.routes.set(result.items));
@@ -518,6 +618,76 @@ export class BookingComponent {
       error: (error: HttpErrorResponse) => {
         const problem = error.error as ProblemDetails | undefined;
         this.toast.error(problem?.title ?? problem?.detail ?? 'Could not cancel this ticket.');
+      },
+    });
+  }
+
+  paymentStatusLabel(status: PaymentDto['status']): string {
+    return PaymentStatusLabel[status];
+  }
+
+  paymentMethodLabel(method: PaymentDto['method']): string {
+    return PaymentMethodLabel[method];
+  }
+
+  loadPayments(): void {
+    this.loadingPayments.set(true);
+    this.paymentsLoaded.set(false);
+    const { status, method } = this.paymentFilterForm.getRawValue();
+    const query: any = { pageSize: 50 };
+    if (status !== -1) query.status = status;
+    if (method !== -1) query.method = method;
+
+    this.bookingService.getPayments(query).subscribe({
+      next: (result) => {
+        this.payments.set(result.items);
+        this.loadingPayments.set(false);
+        this.paymentsLoaded.set(true);
+      },
+      error: () => {
+        this.payments.set([]);
+        this.loadingPayments.set(false);
+        this.paymentsLoaded.set(true);
+      },
+    });
+  }
+
+  capturePayment(payment: PaymentDto): void {
+    this.bookingService.capturePayment(payment.id).subscribe({
+      next: () => {
+        this.toast.success(`Payment ${payment.transactionRef} captured.`);
+        this.loadPayments();
+      },
+      error: (error: HttpErrorResponse) => {
+        const problem = error.error as ProblemDetails | undefined;
+        this.toast.error(problem?.title ?? problem?.detail ?? 'Could not capture payment.');
+      },
+    });
+  }
+
+  refundPayment(payment: PaymentDto): void {
+    this.bookingService.refundPayment(payment.id).subscribe({
+      next: () => {
+        this.toast.success(`Payment ${payment.transactionRef} refunded.`);
+        this.loadPayments();
+      },
+      error: (error: HttpErrorResponse) => {
+        const problem = error.error as ProblemDetails | undefined;
+        this.toast.error(problem?.title ?? problem?.detail ?? 'Could not refund payment.');
+      },
+    });
+  }
+
+  failPayment(payment: PaymentDto): void {
+    if (!confirm(`Mark payment ${payment.transactionRef} as failed? This action cannot be undone.`)) return;
+    this.bookingService.failPayment(payment.id).subscribe({
+      next: () => {
+        this.toast.success(`Payment ${payment.transactionRef} marked as failed.`);
+        this.loadPayments();
+      },
+      error: (error: HttpErrorResponse) => {
+        const problem = error.error as ProblemDetails | undefined;
+        this.toast.error(problem?.title ?? problem?.detail ?? 'Could not fail payment.');
       },
     });
   }

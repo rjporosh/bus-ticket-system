@@ -1,10 +1,13 @@
 using System.Text;
+using System.Text;
 using BusTicketing.Application.Common.Interfaces;
 using BusTicketing.Application.Common.Models;
+using BusTicketing.Domain.Enums;
 using BusTicketing.Infrastructure.Persistence;
 using BusTicketing.Infrastructure.Persistence.Providers;
 using BusTicketing.Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

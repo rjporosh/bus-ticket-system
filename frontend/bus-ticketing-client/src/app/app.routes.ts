@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { authGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
   {
@@ -17,10 +18,12 @@ export const routes: Routes = [
       {
         path: 'booking/:tripId',
         loadComponent: () => import('./features/booking/booking.component').then((m) => m.BookingComponent),
+        canActivate: [authGuard],
       },
       {
         path: 'my-tickets',
         loadComponent: () => import('./features/my-tickets/my-tickets.component').then((m) => m.MyTicketsComponent),
+        canActivate: [authGuard],
       },
       {
         path: 'login',

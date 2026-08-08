@@ -174,6 +174,13 @@ export const TicketStatusLabel: Record<TicketStatus, string> = {
 };
 
 export type PaymentStatus = 0 | 1 | 2 | 3; // Pending | Captured | Failed | Refunded
+export const PaymentStatusLabel: Record<PaymentStatus, string> = {
+  0: 'Pending',
+  1: 'Captured',
+  2: 'Failed',
+  3: 'Refunded',
+};
+
 export type PaymentMethod = 0 | 1 | 2; // Cash | MockCard | MockMobileBanking
 export const PaymentMethodLabel: Record<PaymentMethod, string> = {
   0: 'Cash',
@@ -234,6 +241,19 @@ export interface BusSeatStatusDto {
   departureTime: string;
   availableSeats: number;
   totalSeats: number;
+}
+
+export interface PaymentDto {
+  id: string;
+  ticketId: string;
+  ticketNumber: string;
+  passengerName: string;
+  amount: number;
+  method: PaymentMethod;
+  status: PaymentStatus;
+  transactionRef: string;
+  processedAtUtc: string | null;
+  failureReason: string | null;
 }
 
 export interface DashboardSummaryDto {

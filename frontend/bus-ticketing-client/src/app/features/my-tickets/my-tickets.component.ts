@@ -3,13 +3,15 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { ApiService } from '../../core/services/api.service';
-import { TicketDto } from '../../core/models/api-models';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { TicketsService } from '../../core/services/tickets.service';
+import { ToastService } from '../../core/services/toast.service';
+import { TicketDto, TicketStatusLabel } from '../../core/models/api-models';
 
 @Component({
   selector: 'app-my-tickets',
   standalone: true,
-  imports: [CommonModule, RouterLink, MatButtonModule, MatProgressSpinnerModule],
+  imports: [CommonModule, RouterLink, MatButtonModule, MatProgressSpinnerModule, MatSnackBarModule],
   template: `
     <div class="my-tickets-container">
       <h2>My Tickets</h2>
@@ -20,7 +22,7 @@ import { TicketDto } from '../../core/models/api-models';
           <div class="ticket-card" *ngFor="let ticket of tickets()">
             <div class="ticket-header">
               <div class="ticket-number">{{ ticket.ticketNumber }}</div>
-              <div class="ticket-status" [class]="'status-' + ticket.status.toLowerCase()">{{ ticket.status }}</div>
+              <div class="ticket-status" [class]="'status-' + ticket.status">{{ statusLabel(ticket.status) }}</div>
             </div>
             <div class="ticket-body">
               <div class="ticket-route">
@@ -30,7 +32,7 @@ import { TicketDto } from '../../core/models/api-models';
               <div class="ticket-details">
                 <div class="detail-row">
                   <span class="label">Bus:</span>
-                  <span class="value">{{ ticket.busName }}</span>
+                  <span class="value">{{ ticket.busNumber }}</span>
                 </div>
                 <div class="detail-row">
                   <span class="label">Date:</span>
@@ -41,26 +43,27 @@ import { TicketDto } from '../../core/models/api-models';
                   <span class="value">{{ ticket.departureTime }}</span>
                 </div>
                 <div class="detail-row">
-                  <span class="label">Arrival:</span>
-                  <span class="value">{{ ticket.arrivalTime }}</span>
-                </div>
-                <div class="detail-row">
                   <span class="label">Passenger:</span>
                   <span class="value">{{ ticket.passengerName }}</span>
                 </div>
                 <div class="detail-row">
-                  <span class="label">Seats:</span>
-                  <span class="value">{{ ticket.seatNumbers.join(', ') }}</span>
+                  <span class="label">Seat:</span>
+                  <span class="value">{{ ticket.seatNumber }}</span>
                 </div>
                 <div class="detail-row total">
                   <span class="label">Total Paid:</span>
-                  <span class="value price">৳{{ ticket.totalFare | number:'1.2-2' }}</span>
+                  <span class="value price">৳{{ ticket.fareAmount | number:'1.2-2' }}</span>
                 </div>
               </div>
             </div>
-            <div class="ticket-footer" *ngIf="ticket.status === 'Confirmed'">
-              <button mat-stroked-button color="warn" (click)="cancelTicket(ticket.id)">Cancel Ticket</button>
+            <div class="ticket-footer" *ngIf="ticket.status === 0 && !isDeparturePast(ticket)">
+              <button mat-stroked-button color="warn" (click)="cancelTicket(ticket)">Cancel Ticket</button>
             </div>
+            @if (isDeparturePast(ticket)) {
+              <div class="ticket-footer">
+                <span class="departed-note">Journey has departed — cancellation not allowed</span>
+              </div>
+            }
           </div>
         </div>
 
@@ -82,9 +85,8 @@ import { TicketDto } from '../../core/models/api-models';
     .ticket-header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; background: #f8f9fa; border-bottom: 1px solid #eee; }
     .ticket-number { font-weight: 600; color: #333; }
     .ticket-status { padding: 0.25rem 0.75rem; border-radius: 4px; font-size: 0.875rem; font-weight: 600; }
-    .status-confirmed { background: #e8f5e9; color: #2e7d32; }
-    .status-cancelled { background: #ffebee; color: #c62828; }
-    .status-pending { background: #fff3e0; color: #ef6c00; }
+    .status-0 { background: #e8f5e9; color: #2e7d32; }
+    .status-1 { background: #ffebee; color: #c62828; }
     .ticket-body { padding: 1.5rem; }
     .ticket-route { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem; font-size: 1.1rem; }
     .ticket-route .station { font-weight: 600; color: #333; }
@@ -97,6 +99,7 @@ import { TicketDto } from '../../core/models/api-models';
     .label { color: #666; }
     .value { color: #333; }
     .ticket-footer { padding: 1rem 1.5rem; border-top: 1px solid #eee; display: flex; justify-content: flex-end; }
+    .departed-note { color: #c62828; font-size: 0.875rem; font-weight: 600; }
     .empty-state { text-align: center; padding: 4rem 2rem; }
     .empty-state p { color: #666; margin-bottom: 1.5rem; }
     @media (max-width: 768px) {
@@ -107,18 +110,20 @@ import { TicketDto } from '../../core/models/api-models';
 export class MyTicketsComponent implements OnInit {
   protected readonly tickets = signal<TicketDto[]>([]);
   protected readonly loading = signal(false);
+  protected readonly cancelling = signal<TicketDto | null>(null);
+  protected readonly cancelReason = signal('');
 
-  constructor(private api: ApiService) {}
+  constructor(
+    private ticketsService: TicketsService,
+    private toast: ToastService,
+    private snackBar: MatSnackBar
+  ) {}
 
   ngOnInit(): void {
     this.loading.set(true);
-    this.api.get<any>('/booking/tickets', { pageSize: 50 }).subscribe({
+    this.ticketsService.getMyTickets().subscribe({
       next: (result) => {
-        const items = Array.isArray(result?.items) ? result.items : [];
-        this.tickets.set(items.map((t: any) => ({
-          ...t,
-          status: t.status === 0 ? 'Sold' : t.status === 1 ? 'Cancelled' : 'Pending',
-        })));
+        this.tickets.set(result.items);
         this.loading.set(false);
       },
       error: () => {
@@ -128,14 +133,26 @@ export class MyTicketsComponent implements OnInit {
     });
   }
 
-  cancelTicket(ticketId: string): void {
-    if (!confirm('Are you sure you want to cancel this ticket?')) return;
-    this.api.post(`/booking/tickets/${ticketId}/cancel`, { reason: 'Cancelled by user' }).subscribe({
+  statusLabel(status: TicketDto['status']): string {
+    return TicketStatusLabel[status];
+  }
+
+  isDeparturePast(ticket: TicketDto): boolean {
+    const now = new Date();
+    const departure = new Date(`${ticket.travelDate}T${ticket.departureTime}`);
+    return now > departure && ticket.status === 0;
+  }
+
+  cancelTicket(ticket: TicketDto): void {
+    if (!confirm(`Are you sure you want to cancel ticket ${ticket.ticketNumber}?`)) return;
+
+    this.ticketsService.cancel(ticket.id, 'Cancelled by user').subscribe({
       next: () => {
+        this.toast.success(`Ticket ${ticket.ticketNumber} cancelled successfully.`);
         this.ngOnInit();
       },
       error: () => {
-        alert('Could not cancel ticket. Please try again.');
+        this.toast.error('Could not cancel ticket. Please try again.');
       },
     });
   }

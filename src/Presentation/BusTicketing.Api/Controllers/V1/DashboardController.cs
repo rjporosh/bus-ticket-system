@@ -18,6 +18,7 @@ public class DashboardController : ControllerBase
 
     /// <summary>Sold/available seat counts, revenue, and route/bus breakdowns for a given date.</summary>
     [HttpGet("summary")]
+    [Authorize(Policy = "Permission:DashboardView")]
     [ProducesResponseType(typeof(DashboardSummaryDto), StatusCodes.Status200OK)]
     public async Task<ActionResult<DashboardSummaryDto>> GetSummary([FromQuery] DateOnly date, CancellationToken cancellationToken)
         => Ok(await _sender.Send(new GetDashboardSummaryQuery(date), cancellationToken));

@@ -15,7 +15,9 @@ import { AuthService } from '../core/services/auth.service';
         <nav class="main-nav">
           <a routerLink="/home" routerLinkActive="active" class="nav-link">Home</a>
           <a routerLink="/search" routerLinkActive="active" class="nav-link">Search Trips</a>
-          <a routerLink="/my-tickets" routerLinkActive="active" class="nav-link">My Tickets</a>
+          @if (auth.isAuthenticated()) {
+            <a routerLink="/my-tickets" routerLinkActive="active" class="nav-link">My Tickets</a>
+          }
         </nav>
         <div class="header-actions">
           @if (auth.isAuthenticated()) {

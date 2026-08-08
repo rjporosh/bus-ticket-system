@@ -12,7 +12,7 @@ namespace BusTicketing.Api.Controllers.V1;
 [ApiController]
 [ApiVersion("1.0")]
 [Route("api/v{version:apiVersion}/booking")]
-[Authorize(Roles = SystemRoles.Admin + "," + SystemRoles.BoothStaff + "," + SystemRoles.Customer)]
+[Authorize]
 [Produces("application/json")]
 public class BookingController : ControllerBase
 {
@@ -21,6 +21,7 @@ public class BookingController : ControllerBase
 
     /// <summary>Gets the seat map for a schedule on a specific travel date, with sold seats flagged.</summary>
     [HttpGet("schedules/{scheduleId:guid}/seats")]
+    [AllowAnonymous]
     [ProducesResponseType(typeof(List<SeatAvailabilityDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IResult> GetAvailableSeats(Guid scheduleId, [FromQuery] DateOnly travelDate, CancellationToken cancellationToken)
@@ -32,6 +33,7 @@ public class BookingController : ControllerBase
     /// the race-condition case caught by the DB unique index).
     /// </summary>
     [HttpPost("tickets")]
+    [Authorize(Policy = "Permission:BookingSell")]
     [ProducesResponseType(typeof(TicketDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
@@ -41,8 +43,21 @@ public class BookingController : ControllerBase
         return result.ToApiResult(t => Microsoft.AspNetCore.Http.Results.Created($"/api/v1/booking/tickets/{t.Id}", t));
     }
 
+    /// <summary>Sells multiple seats in one transaction for the same schedule/date.</summary>
+    [HttpPost("tickets/batch")]
+    [Authorize(Policy = "Permission:BookingSell")]
+    [ProducesResponseType(typeof(List<TicketDto>), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<IResult> SellTickets([FromBody] SellTicketsCommand command, CancellationToken cancellationToken)
+    {
+        var result = await _sender.Send(command, cancellationToken);
+        return result.ToApiResult(t => Microsoft.AspNetCore.Http.Results.Created($"/api/v1/booking/tickets/batch", t));
+    }
+
     /// <summary>Cancels a sold ticket before its journey's departure time, freeing the seat and refunding the mock payment.</summary>
     [HttpPost("tickets/{ticketId:guid}/cancel")]
+    [Authorize(Policy = "Permission:BookingCancel")]
     [ProducesResponseType(typeof(TicketDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
@@ -51,12 +66,21 @@ public class BookingController : ControllerBase
 
     /// <summary>Searches tickets by ticket number, mobile number, travel date, route or status, paginated.</summary>
     [HttpGet("tickets")]
+    [Authorize(Policy = "Permission:BookingSearch")]
     [ProducesResponseType(typeof(PaginatedList<TicketDto>), StatusCodes.Status200OK)]
     public async Task<ActionResult<PaginatedList<TicketDto>>> Search(
         [FromQuery] TicketSearchField? searchBy, [FromQuery] string? searchText, [FromQuery] DateOnly? travelDate,
         [FromQuery] Guid? routeId, [FromQuery] TicketStatus? status,
         [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 20, CancellationToken cancellationToken = default)
         => Ok(await _sender.Send(new SearchTicketsQuery(searchBy, searchText, travelDate, routeId, status, pageNumber, pageSize), cancellationToken));
+
+    /// <summary>Returns the current customer's own bookings, paginated.</summary>
+    [HttpGet("my-tickets")]
+    [Authorize(Policy = "Permission:BookingViewOwn")]
+    [ProducesResponseType(typeof(PaginatedList<TicketDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<PaginatedList<TicketDto>>> GetMyTickets(
+        [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 20, CancellationToken cancellationToken = default)
+        => Ok(await _sender.Send(new GetMyTicketsQuery(pageNumber, pageSize), cancellationToken));
 }
 
 public record CancelTicketRequest(string Reason);

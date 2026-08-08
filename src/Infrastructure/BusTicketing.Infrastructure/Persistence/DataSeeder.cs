@@ -32,6 +32,25 @@ public static class DataSeeder
         var customerRole = await GetOrCreateRoleAsync(db, SystemRoles.Customer, "Self-service customer account.", isSystemRole: true);
         await db.SaveChangesAsync();
 
+        await SeedPermissionsAsync(db, adminRole.Id, new[]
+        {
+            Permission.BookingSell, Permission.BookingCancel, Permission.BookingSearch,
+            Permission.DashboardView, Permission.ScheduleManage, Permission.BusManage,
+            Permission.RouteManage, Permission.StationManage, Permission.UserManage,
+            Permission.RoleManage, Permission.PaymentManage, Permission.PaymentCapture,
+            Permission.PaymentRefund, Permission.PaymentFail,
+        }, logger);
+        await SeedPermissionsAsync(db, boothRole.Id, new[]
+        {
+            Permission.BookingSell, Permission.BookingCancel, Permission.BookingSearch,
+            Permission.DashboardView, Permission.PaymentManage,
+        }, logger);
+        await SeedPermissionsAsync(db, customerRole.Id, new[]
+        {
+            Permission.BookingSell, Permission.BookingViewOwn, Permission.DashboardView,
+        }, logger);
+        await db.SaveChangesAsync();
+
         await GetOrCreateUserAsync(db, passwordHasher, "admin", "admin@bus-ticketing.local", "Admin@12345", "System Administrator", adminRole.Id, null);
         await GetOrCreateUserAsync(db, passwordHasher, "dhaka_staff_1", "dhaka.staff1@bus-ticketing.local", "Dhaka@12345", "Dhaka Booth Staff", boothRole.Id, "Dhaka");
         await GetOrCreateUserAsync(db, passwordHasher, "ctg_staff_1", "ctg.staff1@bus-ticketing.local", "Ctg@123456", "Chittagong Booth Staff", boothRole.Id, "Chittagong");
@@ -135,5 +154,24 @@ public static class DataSeeder
 
         var schedule = Schedule.Create(busId, routeId, departure, arrival, DayOfWeekFlag.Daily, effectiveFrom, null, fare);
         db.Schedules.Add(schedule);
+    }
+
+    private static async Task SeedPermissionsAsync(ApplicationDbContext db, Guid roleId, Permission[] permissions, ILogger logger)
+    {
+        try
+        {
+            foreach (var permission in permissions)
+            {
+                var exists = await db.RolePermissions.AnyAsync(rp => rp.RoleId == roleId && rp.Permission == permission);
+                if (!exists)
+                {
+                    db.RolePermissions.Add(RolePermission.Create(roleId, permission));
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Could not seed permissions for role {RoleId}. The RolePermissions table may not exist yet. Run EF Core migrations to enable fine-grained permissions.", roleId);
+        }
     }
 }

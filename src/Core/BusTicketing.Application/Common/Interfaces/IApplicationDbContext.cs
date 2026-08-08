@@ -23,6 +23,8 @@ public interface IApplicationDbContext
     DbSet<Ticket> Tickets { get; }
     DbSet<Payment> Payments { get; }
     DbSet<AuditLog> AuditLogs { get; }
+    DbSet<TicketNumberCounter> TicketNumberCounters { get; }
+    DbSet<RolePermission> RolePermissions { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 
