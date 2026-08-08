@@ -72,6 +72,6 @@ public class SearchTripsQueryHandler : IRequestHandler<SearchTripsQuery, Paginat
             .Take(request.PageSize)
             .ToList();
 
-        return new PaginatedList<TripDto>(items, request.PageNumber, request.PageSize, totalCount);
+        return new PaginatedList<TripDto>(items, totalCount, request.PageNumber, request.PageSize);
     }
 }

@@ -31,6 +31,7 @@ public class GetMyTicketsQueryHandler : IRequestHandler<GetMyTicketsQuery, Pagin
             join u in _db.Users on t.SoldByUserId equals u.Id into sellers
             from seller in sellers.DefaultIfEmpty()
             where t.SoldByUserId == userId
+            orderby t.SoldAtUtc descending
             select new TicketDto(
                 t.Id, t.TicketNumber, t.ScheduleId, t.Schedule.Bus.Number, t.Schedule.Route.Name,
                 t.SeatId, t.Seat.SeatNumber, t.TravelDate, t.Schedule.DepartureTime,
@@ -38,6 +39,6 @@ public class GetMyTicketsQueryHandler : IRequestHandler<GetMyTicketsQuery, Pagin
                 t.FareAmount, t.Status, seller != null ? seller.Username : "unknown", t.SoldAtUtc,
                 t.CancellationReason, t.CancelledAtUtc, null, null);
 
-        return PaginatedList<TicketDto>.CreateAsync(query.OrderByDescending(t => t.SoldAtUtc), request.PageNumber, request.PageSize, cancellationToken);
+        return PaginatedList<TicketDto>.CreateAsync(query, request.PageNumber, request.PageSize, cancellationToken);
     }
 }
