@@ -34,7 +34,7 @@ public static class DataSeeder
 
         await SeedPermissionsAsync(db, adminRole.Id, new[]
         {
-            Permission.BookingSell, Permission.BookingCancel, Permission.BookingSearch,
+            Permission.BookingSell, Permission.BookingCancel, Permission.BookingSearch, Permission.BookingViewOwn,
             Permission.DashboardView, Permission.ScheduleManage, Permission.BusManage,
             Permission.RouteManage, Permission.StationManage, Permission.UserManage,
             Permission.RoleManage, Permission.PaymentManage, Permission.PaymentCapture,
@@ -42,7 +42,7 @@ public static class DataSeeder
         }, logger);
         await SeedPermissionsAsync(db, boothRole.Id, new[]
         {
-            Permission.BookingSell, Permission.BookingCancel, Permission.BookingSearch,
+            Permission.BookingSell, Permission.BookingCancel, Permission.BookingSearch, Permission.BookingViewOwn,
             Permission.DashboardView, Permission.PaymentManage,
         }, logger);
         await SeedPermissionsAsync(db, customerRole.Id, new[]
