@@ -365,7 +365,7 @@ type WizardStep = 'trip' | 'seat' | 'passenger' | 'confirmation';
                       <td mat-cell *matCellDef="let p">{{ paymentMethodLabel(p.method) }}</td>
                     </ng-container>
                     <ng-container matColumnDef="status">
-                      <th mat-header-cell *matHeaderDef>Status</th>
+                       <th mat-header-cell *matHeaderCellDef>Status</th>
                       <td mat-cell *matCellDef="let p">
                         <span class="board-chip" [class.board-chip--available]="p.status === 1" [class.board-chip--sold]="p.status === 0">
                           {{ paymentStatusLabel(p.status) }}
