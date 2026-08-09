@@ -1,10 +1,71 @@
 # Release Notes
 
-## Version: 1.0.2
-**Release Date:** 09-08-2026
-**Phase:** Phase 4 — CORS Hardening & Admin Seat Map UX
+## Version: 1.0.3
+**Release Date:** 10-08-2026
+**Phase:** Phase 5 — Admin Multi-Seat Booking + RealBus Last-Row Config + Age/Gender Display
 
 ---
+
+## Features Built
+
+### Milestone 7 — Age Capture + Seat Grid Polish
+- **Backend:** `Ticket` entity extended with `Age` property; `Ticket.Sell()`, `SellTicketCommand`, `SellTicketItem`, `SellTicketsCommand`, and all `TicketDto` projections updated
+- **Migration:** `20260809194903_AddAgeToTickets` adds nullable `Age` column to `Tickets` table
+- **Admin:** Passenger form includes Age input; confirmation step displays Gender and Age
+- **Client:** Passenger form includes Age input
+- **Frontend (both):** Seat grid `gap` changed to `0`; aisle spacing driven by empty `visualCol` columns
+- **Client:** Same-for-all checkbox fixed with explicit `@if` template branches and `valueChanges` subscription; added missing `MatCheckboxModule` import
+
+### Milestone 6 — RealBus Last-Row Configuration
+- **Backend:** `RealBusConfig.LastRowConfig` added; `GenerateRealBusLayout()`, `MapRealBusSeats()`, and `SeatLayoutFeature` visual mapping honor last-row override
+- **Admin:** Bus form dialog exposes "Override last row seats" checkbox with Left/Right inputs; last-row config serialized to `LayoutConfigJson`
+
+### Milestone 5 — Admin Multi-Seat Batch Selling
+- **Admin:** Booking wizard upgraded from single-seat to multi-seat selection (up to 10 seats)
+- **Admin:** Seat grid renders RealBus layout via `visualRow`/`visualCol` CSS grid positioning
+- **Admin:** Passenger step uses `FormArray` with per-seat passenger forms (name, mobile, gender, age, NID/passport)
+- **Admin:** "Same passenger for all seats" toggle collapses multi-seat bookings to a single form
+- **Admin:** Batch submission via `BookingService.sellTickets()` with `SellTicketsRequest`
+- **Admin:** Confirmation step displays all sold tickets with ticket number, passenger, seat, fare, gender, and age
+
+## Bugs Resolved
+
+| Bug | Resolution |
+|-----|-----------|
+| Client "Same for all seats" checkbox not functional | Rewrote template with explicit `@if` branches for same-for-all vs per-seat forms; added `valueChanges` subscription and `MatCheckboxModule` import |
+| Last-row seats not rendered correctly in RealBus layout | Added `RealBusConfig.LastRowConfig` and updated all backend visual mapping paths |
+| Admin booking only sold one seat at a time | Rewrote wizard to use `selectedSeats` array and batch `sellTickets` API |
+| Seat grid had unwanted gap between seats | Changed CSS `gap` to `0`; aisle is now natural empty grid columns |
+| No age field on passenger forms | Added `Age` to `Ticket` entity, DTOs, commands, and both frontend forms |
+| Gender and age not visible to admin on sold tickets | Confirmation step now shows Gender and Age fields |
+
+## Breaking Changes
+
+**None.** All changes are additive:
+- New `Age` column is nullable; existing tickets unaffected
+- `LastRowConfig` is optional in `RealBusConfig`; existing buses without it behave identically
+- Admin booking wizard is a drop-in replacement; existing single-seat flow still works
+
+## Migration Notes
+
+### Database
+```bash
+dotnet ef migrations add AddAgeToTickets \
+  --project src/Infrastructure/BusTicketing.Infrastructure \
+  --startup-project src/Presentation/BusTicketing.Api
+
+dotnet ef database update \
+  --project src/Infrastructure/BusTicketing.Infrastructure \
+  --startup-project src/Presentation/BusTicketing.Api
+```
+
+### Frontend
+No migration needed. New fields are additive to existing forms.
+
+---
+
+## Previous Versions
+
 
 ## Features Built
 
