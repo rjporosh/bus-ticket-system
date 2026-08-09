@@ -19,6 +19,7 @@ public record SellTicketCommand(
     PaymentMethod PaymentMethod,
     string? NidOrPassport = null,
     string? Gender = null,
+    int? Age = null,
     string? Remarks = null) : IRequest<Result<TicketDto>>;
 
 public class SellTicketCommandValidator : AbstractValidator<SellTicketCommand>
@@ -104,7 +105,7 @@ public class SellTicketCommandHandler : IRequestHandler<SellTicketCommand, Resul
             ticketNumber, request.ScheduleId, request.SeatId, request.TravelDate,
             request.PassengerName, request.MobileNumber, request.FareAmount,
             _currentUser.UserId ?? Guid.Empty, now,
-            request.NidOrPassport, request.Gender, request.Remarks);
+            request.NidOrPassport, request.Gender, request.Age, request.Remarks);
 
         var payment = Payment.CreatePending(ticket.Id, request.FareAmount, request.PaymentMethod, $"MOCK-{ticketNumber}");
         payment.Capture(now); // mock gateway: always succeeds synchronously
@@ -130,7 +131,7 @@ public class SellTicketCommandHandler : IRequestHandler<SellTicketCommand, Resul
         return Result.Success(new TicketDto(
             ticket.Id, ticket.TicketNumber, schedule.Id, schedule.Bus.Number, schedule.Route.Name,
             seat.Id, seat.SeatNumber, ticket.TravelDate, schedule.DepartureTime,
-            ticket.PassengerName, ticket.MobileNumber, ticket.NidOrPassport, ticket.Gender, ticket.Remarks,
+            ticket.PassengerName, ticket.MobileNumber, ticket.NidOrPassport, ticket.Gender, ticket.Age, ticket.Remarks,
             ticket.FareAmount, ticket.Status, _currentUser.Username ?? "unknown", ticket.SoldAtUtc,
             null, null, payment.Status, payment.TransactionRef));
     }

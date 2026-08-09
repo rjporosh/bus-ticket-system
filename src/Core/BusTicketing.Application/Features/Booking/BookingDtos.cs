@@ -16,6 +16,7 @@ public record TicketDto(
     string MobileNumber,
     string? NidOrPassport,
     string? Gender,
+    int? Age,
     string? Remarks,
     decimal FareAmount,
     TicketStatus Status,

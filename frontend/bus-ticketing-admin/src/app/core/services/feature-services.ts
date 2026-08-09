@@ -162,6 +162,9 @@ export class BookingService {
   sellTicket(body: unknown): Observable<TicketDto> {
     return this.api.post(API_ENDPOINTS.booking.sellTicket, body);
   }
+  sellTickets(body: unknown): Observable<TicketDto[]> {
+    return this.api.post(API_ENDPOINTS.booking.sellTickets, body);
+  }
   cancelTicket(ticketId: string, reason: string): Observable<TicketDto> {
     return this.api.post(API_ENDPOINTS.booking.cancelTicket(ticketId), { reason });
   }

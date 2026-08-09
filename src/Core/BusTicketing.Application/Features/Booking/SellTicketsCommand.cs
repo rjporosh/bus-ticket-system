@@ -23,7 +23,8 @@ public record SellTicketItem(
     decimal FareAmount,
     PaymentMethod PaymentMethod,
     string? NidOrPassport = null,
-    string? Gender = null);
+    string? Gender = null,
+    int? Age = null);
 
 public class SellTicketsCommandValidator : AbstractValidator<SellTicketsCommand>
 {
@@ -120,7 +121,7 @@ public class SellTicketsCommandHandler : IRequestHandler<SellTicketsCommand, Res
                 ticketNumber, request.ScheduleId, item.SeatId, request.TravelDate,
                 item.PassengerName, item.MobileNumber, item.FareAmount,
                 _currentUser.UserId ?? Guid.Empty, now,
-                item.NidOrPassport, item.Gender, request.Remarks);
+                item.NidOrPassport, item.Gender, item.Age, request.Remarks);
 
             var payment = Payment.CreatePending(ticket.Id, item.FareAmount, item.PaymentMethod, $"MOCK-{ticketNumber}");
             payment.Capture(now);
@@ -155,7 +156,7 @@ public class SellTicketsCommandHandler : IRequestHandler<SellTicketsCommand, Res
             resultDtos.Add(new TicketDto(
                 ticket.Id, ticket.TicketNumber, schedule.Id, schedule.Bus.Number, schedule.Route.Name,
                 ticket.SeatId, seat.SeatNumber, ticket.TravelDate, schedule.DepartureTime,
-                ticket.PassengerName, ticket.MobileNumber, ticket.NidOrPassport, ticket.Gender, ticket.Remarks,
+                ticket.PassengerName, ticket.MobileNumber, ticket.NidOrPassport, ticket.Gender, ticket.Age, ticket.Remarks,
                 ticket.FareAmount, ticket.Status, _currentUser.Username ?? "unknown", ticket.SoldAtUtc,
                 null, null, payment.Status, payment.TransactionRef));
         }

@@ -35,7 +35,7 @@ public class GetMyTicketsQueryHandler : IRequestHandler<GetMyTicketsQuery, Pagin
             select new TicketDto(
                 t.Id, t.TicketNumber, t.ScheduleId, t.Schedule.Bus.Number, t.Schedule.Route.Name,
                 t.SeatId, t.Seat.SeatNumber, t.TravelDate, t.Schedule.DepartureTime,
-                t.PassengerName, t.MobileNumber, t.NidOrPassport, t.Gender, t.Remarks,
+                t.PassengerName, t.MobileNumber, t.NidOrPassport, t.Gender, t.Age, t.Remarks,
                 t.FareAmount, t.Status, seller != null ? seller.Username : "unknown", t.SoldAtUtc,
                 t.CancellationReason, t.CancelledAtUtc, null, null);
 

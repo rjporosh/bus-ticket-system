@@ -245,6 +245,17 @@ export class BusesComponent implements OnInit {
                   </div>
                 }
               </div>
+              <div class="last-row-config">
+                <mat-checkbox [checked]="useLastRowOverride()" (change)="onLastRowOverrideChange()">Override last row seats</mat-checkbox>
+                @if (useLastRowOverride()) {
+                  <div class="row-config">
+                    <span class="row-label">Last</span>
+                    <input type="number" [value]="lastRowConfig()?.left ?? 2" (input)="updateLastRowConfig('left', $any($event.target).value)" min="0" max="4" />
+                    <span class="row-sep">|</span>
+                    <input type="number" [value]="lastRowConfig()?.right ?? 2" (input)="updateLastRowConfig('right', $any($event.target).value)" min="0" max="4" />
+                  </div>
+                }
+              </div>
             </div>
           }
           @if (form.controls['layoutType'].value !== 1) {
@@ -272,6 +283,7 @@ export class BusesComponent implements OnInit {
       .row-label { width: 50px; font-size: 0.85rem; color: var(--color-text-muted); }
       .row-config input { width: 50px; text-align: center; }
       .row-sep { color: var(--color-text-muted); }
+      .last-row-config { margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--color-border); }
     `,
   ],
 })
@@ -294,6 +306,8 @@ export class BusFormDialogComponent {
   });
 
   protected readonly rowConfigs = signal<{ label: string; left: number; right: number }[]>([]);
+  protected readonly lastRowConfig = signal<{ left: number; right: number } | null>(null);
+  protected readonly useLastRowOverride = signal(false);
 
   constructor() {
     this.initRowConfigs();
@@ -310,6 +324,14 @@ export class BusFormDialogComponent {
         return { label, left: rs?.Left ?? 2, right: rs?.Right ?? 2 };
       })
     );
+    const lastRow = config?.LastRowConfig;
+    if (lastRow) {
+      this.lastRowConfig.set({ left: lastRow.Left, right: lastRow.Right });
+      this.useLastRowOverride.set(true);
+    } else {
+      this.lastRowConfig.set(null);
+      this.useLastRowOverride.set(false);
+    }
   }
 
   onRowsChange(): void {
@@ -322,6 +344,21 @@ export class BusFormDialogComponent {
     const updated = [...current];
     updated[index] = { ...updated[index], [field]: num };
     this.rowConfigs.set(updated);
+  }
+
+  onLastRowOverrideChange(): void {
+    if (this.useLastRowOverride() && !this.lastRowConfig()) {
+      this.lastRowConfig.set({ left: 2, right: 2 });
+    }
+    if (!this.useLastRowOverride()) {
+      this.lastRowConfig.set(null);
+    }
+  }
+
+  updateLastRowConfig(field: 'left' | 'right', value: string): void {
+    const num = Math.max(0, Math.min(4, parseInt(value) || 0));
+    const current = this.lastRowConfig() ?? { left: 2, right: 2 };
+    this.lastRowConfig.set({ ...current, [field]: num });
   }
 
   seatCount(): number {
@@ -338,22 +375,32 @@ export class BusFormDialogComponent {
   realBusSeatCount(): number {
     const rows = this.form.controls.rows.value || 0;
     const config = this.form.getRawValue();
+    const useLastRow = this.useLastRowOverride() && this.lastRowConfig() != null;
+    const lastRow = useLastRow ? this.lastRowConfig()! : null;
     let count = 0;
     const rowConfigs = this.rowConfigs();
     for (let i = 0; i < rows; i++) {
-      const rs = rowConfigs[i] || { left: 2, right: 2 };
-      count += rs.left + rs.right + (i === 0 && config.driverSeat ? 1 : 0);
+      let left = rowConfigs[i]?.left ?? 2;
+      let right = rowConfigs[i]?.right ?? 2;
+      if (i === rows - 1 && lastRow != null) {
+        left = lastRow.left;
+        right = lastRow.right;
+      }
+      count += left + right + (i === 0 && config.driverSeat ? 1 : 0);
     }
     return count;
   }
 
   buildLayoutConfigJson(): string | null {
     if (this.form.controls.layoutType.value !== 1) return null;
-    const config = {
+    const config: any = {
       DriverSeat: this.form.controls.driverSeat.value,
       AisleGap: this.form.controls.aisleGap.value,
       SeatsPerRow: this.rowConfigs().map(r => ({ Left: r.left, Right: r.right })),
     };
+    if (this.useLastRowOverride() && this.lastRowConfig()) {
+      config.LastRowConfig = { Left: this.lastRowConfig()!.left, Right: this.lastRowConfig()!.right };
+    }
     return JSON.stringify(config);
   }
 

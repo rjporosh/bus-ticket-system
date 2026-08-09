@@ -79,7 +79,7 @@ public class CancelTicketCommandHandler : IRequestHandler<CancelTicketCommand, R
         return Result.Success(new TicketDto(
             ticket.Id, ticket.TicketNumber, ticket.ScheduleId, ticket.Schedule.Bus.Number, ticket.Schedule.Route.Name,
             ticket.SeatId, ticket.Seat.SeatNumber, ticket.TravelDate, ticket.Schedule.DepartureTime,
-            ticket.PassengerName, ticket.MobileNumber, ticket.NidOrPassport, ticket.Gender, ticket.Remarks,
+            ticket.PassengerName, ticket.MobileNumber, ticket.NidOrPassport, ticket.Gender, ticket.Age, ticket.Remarks,
             ticket.FareAmount, ticket.Status, seller?.Username ?? "unknown", ticket.SoldAtUtc,
             ticket.CancellationReason, ticket.CancelledAtUtc, payment?.Status, payment?.TransactionRef));
     }

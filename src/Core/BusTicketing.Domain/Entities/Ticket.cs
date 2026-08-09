@@ -26,6 +26,7 @@ public class Ticket : BaseEntity
     public string MobileNumber { get; private set; } = default!;
     public string? NidOrPassport { get; private set; }
     public string? Gender { get; private set; }
+    public int? Age { get; private set; }
     public string? Remarks { get; private set; }
 
     public decimal FareAmount { get; private set; }
@@ -52,6 +53,7 @@ public class Ticket : BaseEntity
         DateTimeOffset soldAtUtc,
         string? nidOrPassport = null,
         string? gender = null,
+        int? age = null,
         string? remarks = null)
     {
         if (string.IsNullOrWhiteSpace(ticketNumber))
@@ -73,6 +75,7 @@ public class Ticket : BaseEntity
             MobileNumber = mobileNumber.Trim(),
             NidOrPassport = nidOrPassport,
             Gender = gender,
+            Age = age,
             Remarks = remarks,
             FareAmount = fareAmount,
             Status = TicketStatus.Sold,

@@ -33,7 +33,7 @@ import {
     CommonModule, ReactiveFormsModule, RouterLink,
     MatFormFieldModule, MatInputModule, MatButtonModule,
     MatSelectModule, MatIconModule, MatProgressSpinnerModule,
-    MatSnackBarModule,
+    MatSnackBarModule, MatCheckboxModule,
   ],
   template: `
     <div class="booking-container" *ngIf="trip(); else noTrip">
@@ -78,27 +78,21 @@ import {
         <div class="booking-form">
           <h3>Passenger Details</h3>
           <form [formGroup]="bookingForm" (ngSubmit)="onSubmit()">
-            <div formArrayName="passengers">
-              @for (passenger of passengers.controls; track $index; let i = $index) {
-                <div [formGroupName]="i" class="passenger-card">
-                  <h4>
-                    @if (i === 0) {
-                      Passenger 1
-                    } @else {
-                      Passenger {{ i + 1 }} · Seat {{ selectedSeats()[i].seatNumber }}
-                    }
-                  </h4>
+            @if (sameForAll && selectedSeats().length > 0) {
+              <div formArrayName="passengers">
+                <div [formGroupName]="0" class="passenger-card">
+                  <h4>Passenger Details (all {{ selectedSeats().length }} seats)</h4>
                   <div class="grid-2">
                     <mat-form-field appearance="outline" class="full-width">
                       <mat-label>Full Name *</mat-label>
                       <input matInput formControlName="name" placeholder="As per ID">
-                      <mat-error *ngIf="passenger.get('name')?.hasError('required')">Name is required</mat-error>
+                      <mat-error *ngIf="passengers.at(0).get('name')?.hasError('required')">Name is required</mat-error>
                     </mat-form-field>
                     <mat-form-field appearance="outline" class="full-width">
                       <mat-label>Mobile Number *</mat-label>
                       <input matInput formControlName="mobile" placeholder="01XXXXXXXXX" maxlength="11">
-                      <mat-error *ngIf="passenger.get('mobile')?.hasError('required')">Mobile is required</mat-error>
-                      <mat-error *ngIf="passenger.get('mobile')?.hasError('pattern')">Numbers only, max 11 digits</mat-error>
+                      <mat-error *ngIf="passengers.at(0).get('mobile')?.hasError('required')">Mobile is required</mat-error>
+                      <mat-error *ngIf="passengers.at(0).get('mobile')?.hasError('pattern')">Numbers only, max 11 digits</mat-error>
                     </mat-form-field>
                     <mat-form-field appearance="outline" class="full-width">
                       <mat-label>Gender</mat-label>
@@ -109,16 +103,59 @@ import {
                       </mat-select>
                     </mat-form-field>
                     <mat-form-field appearance="outline" class="full-width">
+                      <mat-label>Age</mat-label>
+                      <input matInput type="number" formControlName="age" min="0" max="120" />
+                    </mat-form-field>
+                    <mat-form-field appearance="outline" class="full-width">
                       <mat-label>NID / Passport</mat-label>
                       <input matInput formControlName="nid">
                     </mat-form-field>
                   </div>
                 </div>
-              }
-            </div>
+              </div>
+            } @else {
+              <div formArrayName="passengers">
+                @for (passenger of passengers.controls; track $index; let i = $index) {
+                  <div [formGroupName]="i" class="passenger-card">
+                    <h4>
+                      Passenger {{ i + 1 }} · Seat {{ selectedSeats()[i]?.seatNumber }}
+                    </h4>
+                    <div class="grid-2">
+                      <mat-form-field appearance="outline" class="full-width">
+                        <mat-label>Full Name *</mat-label>
+                        <input matInput formControlName="name" placeholder="As per ID">
+                        <mat-error *ngIf="passenger.get('name')?.hasError('required')">Name is required</mat-error>
+                      </mat-form-field>
+                      <mat-form-field appearance="outline" class="full-width">
+                        <mat-label>Mobile Number *</mat-label>
+                        <input matInput formControlName="mobile" placeholder="01XXXXXXXXX" maxlength="11">
+                        <mat-error *ngIf="passenger.get('mobile')?.hasError('required')">Mobile is required</mat-error>
+                        <mat-error *ngIf="passenger.get('mobile')?.hasError('pattern')">Numbers only, max 11 digits</mat-error>
+                      </mat-form-field>
+                      <mat-form-field appearance="outline" class="full-width">
+                        <mat-label>Gender</mat-label>
+                        <mat-select formControlName="gender">
+                          <mat-option value="Male">Male</mat-option>
+                          <mat-option value="Female">Female</mat-option>
+                          <mat-option value="Other">Other</mat-option>
+                        </mat-select>
+                      </mat-form-field>
+                      <mat-form-field appearance="outline" class="full-width">
+                        <mat-label>Age</mat-label>
+                        <input matInput type="number" formControlName="age" min="0" max="120" />
+                      </mat-form-field>
+                      <mat-form-field appearance="outline" class="full-width">
+                        <mat-label>NID / Passport</mat-label>
+                        <input matInput formControlName="nid">
+                      </mat-form-field>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
 
             @if (selectedSeats().length > 1) {
-              <mat-checkbox formControlName="sameForAll" (change)="onSameForAllChange()" class="same-for-all">
+              <mat-checkbox formControlName="sameForAll" class="same-for-all">
                 Same passenger for all seats
               </mat-checkbox>
             }
@@ -154,6 +191,7 @@ import {
                    [class.sold]="seat.isSold"
                    [class.out-of-service]="!seat.isInService"
                    [class.selected]="isSelected(seat)"
+                   [class.current]="seat.seatId === lastSelectedSeatId()"
                    [class.male]="seat.isSold && seat.passengerGender === 'Male'"
                    [class.female]="seat.isSold && seat.passengerGender === 'Female'"
                    [style.grid-row]="getVisualRow(seat)"
@@ -223,7 +261,7 @@ import {
 
     .seat-grid {
       display: grid;
-      gap: 0.5rem;
+      gap: 0;
       justify-content: center;
       margin-bottom: 1rem;
     }
@@ -234,6 +272,7 @@ import {
     }
     .seat-cell:hover:not(.sold):not(.out-of-service):not(.driver-seat) { border-color: #1a73e8; transform: scale(1.05); }
     .seat-cell.selected { background: #1a73e8; color: #fff; border-color: #1a73e8; }
+    .seat-cell.current { box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.35); }
     .seat-cell.sold { background: #ffebee; color: #c62828; border-color: #ffcdd2; cursor: not-allowed; }
     .seat-cell.sold.male { background: #e3f2fd; border-color: #90caf9; color: #1565c0; }
     .seat-cell.sold.female { background: #fce4ec; border-color: #f48fb1; color: #c2185b; }
@@ -271,6 +310,7 @@ export class BookingComponent implements OnInit {
   loading = signal(false);
   loadingSeats = signal(false);
   error = signal<string | null>(null);
+  lastSelectedSeatId = signal<string | null>(null);
 
   bookingForm: FormGroup;
 
@@ -290,12 +330,15 @@ export class BookingComponent implements OnInit {
           name: ['', Validators.required],
           mobile: ['', [Validators.required, Validators.pattern('^[0-9]{0,11}$'), Validators.maxLength(11)]],
           gender: [''],
+          age: [null as number | null],
           nid: [''],
         })
       ]),
       paymentMethod: [0, Validators.required],
       remarks: [''],
     });
+
+    this.bookingForm.get('sameForAll')!.valueChanges.subscribe(() => this.syncPassengers());
   }
 
   get passengers(): FormArray {
@@ -362,12 +405,20 @@ export class BookingComponent implements OnInit {
     const index = current.findIndex(s => s.seatId === seat.seatId);
     if (index >= 0) {
       current.splice(index, 1);
+      this.lastSelectedSeatId.set(current.length > 0 ? current[current.length - 1].seatId : null);
     } else {
       if (current.length >= 10) {
         this.toast.error('You can select up to 10 seats.');
         return;
       }
       current.push(seat);
+      this.lastSelectedSeatId.set(seat.seatId);
+      if (current.length > 1) {
+        const sameForAllControl = this.bookingForm.get('sameForAll');
+        if (sameForAllControl?.value) {
+          sameForAllControl.setValue(false);
+        }
+      }
     }
     this.selectedSeats.set([...current]);
     this.syncPassengers();
@@ -401,6 +452,7 @@ export class BookingComponent implements OnInit {
       name: ['', Validators.required],
       mobile: ['', [Validators.required, Validators.pattern('^[0-9]{0,11}$'), Validators.maxLength(11)]],
       gender: [''],
+      age: [null as number | null],
       nid: [''],
     });
   }
@@ -446,6 +498,7 @@ export class BookingComponent implements OnInit {
           paymentMethod: value.paymentMethod,
           nidOrPassport: p.nid || undefined,
           gender: p.gender || undefined,
+          age: p.age || undefined,
         };
       }),
       remarks: value.remarks || undefined,

@@ -169,6 +169,7 @@ export interface TripDto {
   arrivalTime: string;
   fareAmount: number;
   totalSeats: number;
+  availableSeats: number;
 }
 
 export interface ProblemDetails {
@@ -212,6 +213,8 @@ export interface SeatAvailabilityDto {
   isDriver?: boolean;
   visualRow?: number;
   visualCol?: number;
+  passengerName?: string;
+  passengerGender?: string;
 }
 
 export interface TicketDto {
@@ -228,6 +231,7 @@ export interface TicketDto {
   mobileNumber: string;
   nidOrPassport: string | null;
   gender: string | null;
+  age: number | null;
   remarks: string | null;
   fareAmount: number;
   status: TicketStatus;
@@ -237,6 +241,24 @@ export interface TicketDto {
   cancelledAtUtc: string | null;
   paymentStatus: PaymentStatus | null;
   paymentTransactionRef: string | null;
+}
+
+export interface SellTicketItem {
+  seatId: string;
+  passengerName: string;
+  mobileNumber: string;
+  fareAmount: number;
+  paymentMethod: PaymentMethod;
+  nidOrPassport?: string;
+  gender?: string;
+  age?: number;
+}
+
+export interface SellTicketsRequest {
+  scheduleId: string;
+  travelDate: string;
+  items: SellTicketItem[];
+  remarks?: string;
 }
 
 export enum TicketSearchField {

@@ -1,3 +1,4 @@
+using System.Linq;
 using BusTicketing.Application.Common.Interfaces;
 using BusTicketing.Application.Common.Models;
 using BusTicketing.Domain.Entities;
@@ -40,6 +41,7 @@ public class GetSeatLayoutByBusIdQueryHandler : IRequestHandler<GetSeatLayoutByB
         {
             var config = System.Text.Json.JsonSerializer.Deserialize<RealBusConfig>(layout.LayoutConfigJson) ?? new RealBusConfig();
             var rowSeats = config.SeatsPerRow ?? new List<RowSeatGroup>();
+            var totalRows = seats.Max(s => s.RowLabel[0] - 'A') + 1;
 
             string? currentRowLabel = null;
             int seatIndexInRow = 0;
@@ -54,8 +56,16 @@ public class GetSeatLayoutByBusIdQueryHandler : IRequestHandler<GetSeatLayoutByB
                     currentRowLabel = seat.RowLabel;
                     seatIndexInRow = 0;
                     var rowIdx = seat.RowLabel[0] - 'A';
-                    leftCount = rowSeats.Count > rowIdx ? rowSeats[rowIdx].Left : 2;
-                    rightCount = rowSeats.Count > rowIdx ? rowSeats[rowIdx].Right : 2;
+                    if (rowIdx == totalRows - 1 && config.LastRowConfig != null)
+                    {
+                        leftCount = config.LastRowConfig.Left;
+                        rightCount = config.LastRowConfig.Right;
+                    }
+                    else
+                    {
+                        leftCount = rowSeats.Count > rowIdx ? rowSeats[rowIdx].Left : 2;
+                        rightCount = rowSeats.Count > rowIdx ? rowSeats[rowIdx].Right : 2;
+                    }
                 }
 
                 if (seat.IsDriver)

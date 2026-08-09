@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, FormArray, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -10,6 +10,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { HttpErrorResponse } from '@angular/common/http';
 import { BookingService, RoutesService, SchedulesService } from '../../core/services/feature-services';
 import { ToastService } from '../../core/services/toast.service';
@@ -25,8 +26,9 @@ import {
   PaymentDto,
   PaymentStatus,
   PaymentMethod,
-  PaymentStatusLabel,
   PaymentMethodLabel,
+  PaymentStatusLabel,
+  SellTicketsRequest,
 } from '../../core/models/api-models';
 
 type WizardStep = 'trip' | 'seat' | 'passenger' | 'confirmation';
@@ -46,6 +48,7 @@ type WizardStep = 'trip' | 'seat' | 'passenger' | 'confirmation';
     MatTableModule,
     MatTooltipModule,
     MatProgressSpinnerModule,
+    MatCheckboxModule,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -90,14 +93,18 @@ type WizardStep = 'trip' | 'seat' | 'passenger' | 'confirmation';
                           <th mat-header-cell *matHeaderCellDef>Fare</th>
                           <td mat-cell *matCellDef="let t">৳{{ t.fareAmount }}</td>
                         </ng-container>
+                        <ng-container matColumnDef="seats">
+                          <th mat-header-cell *matHeaderCellDef>Seats</th>
+                          <td mat-cell *matCellDef="let t">{{ t.availableSeats }} available</td>
+                        </ng-container>
                         <ng-container matColumnDef="action">
                           <th mat-header-cell *matHeaderCellDef></th>
                           <td mat-cell *matCellDef="let t">
                             <button mat-flat-button color="primary" (click)="selectTrip(t)">Select</button>
                           </td>
                         </ng-container>
-                        <tr mat-header-row *matHeaderRowDef="['bus', 'time', 'fare', 'action']"></tr>
-                        <tr mat-row *matRowDef="let row; columns: ['bus', 'time', 'fare', 'action']"></tr>
+                        <tr mat-header-row *matHeaderRowDef="['bus', 'time', 'fare', 'seats', 'action']"></tr>
+                        <tr mat-row *matRowDef="let row; columns: ['bus', 'time', 'fare', 'seats', 'action']"></tr>
                       </table>
                     } @else if (tripForm.value.routeId) {
                       <p class="empty-state">No trips run on this date for the selected route.</p>
@@ -108,7 +115,7 @@ type WizardStep = 'trip' | 'seat' | 'passenger' | 'confirmation';
                 @case ('seat') {
                   <mat-card class="card-surface step-card">
                     <div class="step-header">
-                      <h2>2. Select Seat — {{ selectedTrip()?.busNumber }} · {{ selectedTrip()?.departureTime?.slice(0, 5) }}</h2>
+                      <h2>2. Select Seats — {{ selectedTrip()?.busNumber }} · {{ selectedTrip()?.departureTime?.slice(0, 5) }}</h2>
                       <button mat-button (click)="step.set('trip')"><mat-icon>arrow_back</mat-icon> Back</button>
                     </div>
 
@@ -117,27 +124,48 @@ type WizardStep = 'trip' | 'seat' | 'passenger' | 'confirmation';
                     } @else {
                       <div class="legend">
                         <span class="board-chip board-chip--available">Available</span>
+                        <span class="board-chip board-chip--selected">Selected</span>
                         <span class="board-chip board-chip--sold">Sold</span>
                         <span class="board-chip board-chip--muted">Out of Service</span>
+                        @if (seats().some(s => s.isDriver)) {
+                          <span class="board-chip driver-chip">Driver</span>
+                        }
                       </div>
-                      <div class="seat-grid">
+                      <div class="selected-seats-info">
+                        <span>Selected: {{ selectedSeats().length }} / 10</span>
+                        @if (selectedSeats().length > 0) {
+                          <button mat-button (click)="clearSeats()">Clear</button>
+                        }
+                      </div>
+                      <div class="seat-grid" [style.gridTemplateColumns]="getGridTemplateColumns()">
                         @for (seat of seats(); track seat.seatId) {
                           <button
                             type="button"
                             class="seat"
                             [class.seat--sold]="seat.isSold"
                             [class.seat--inactive]="!seat.isInService"
-                            [class.seat--selected]="selectedSeat()?.seatId === seat.seatId"
-                            [disabled]="seat.isSold || !seat.isInService"
+                            [class.seat--selected]="isSelected(seat)"
+                            [class.seat--driver]="seat.isDriver"
+                            [class.seat--male]="seat.isSold && seat.passengerGender === 'Male'"
+                            [class.seat--female]="seat.isSold && seat.passengerGender === 'Female'"
+                            [disabled]="seat.isSold || !seat.isInService || seat.isDriver"
                             [matTooltip]="seatClassLabel(seat)"
-                            (click)="selectedSeat.set(seat)"
+                            [style.grid-row]="getVisualRow(seat)"
+                            [style.grid-column]="getVisualCol(seat)"
+                            (click)="toggleSeat(seat)"
                           >
-                            {{ seat.seatNumber }}
+                            @if (seat.isDriver) {
+                              <span class="driver-icon">&#x1F69A;</span>
+                            } @else if (seat.isSold && seat.passengerName) {
+                              <span class="passenger-initials">{{ getInitials(seat.passengerName) }}</span>
+                            } @else {
+                              {{ seat.seatNumber }}
+                            }
                           </button>
                         }
                       </div>
-                      <button mat-flat-button color="primary" [disabled]="!selectedSeat()" (click)="step.set('passenger')">
-                        Continue with Seat {{ selectedSeat()?.seatNumber }}
+                      <button mat-flat-button color="primary" [disabled]="selectedSeats().length === 0" (click)="step.set('passenger')">
+                        Continue with {{ selectedSeats().length }} Seat{{ selectedSeats().length > 1 ? 's' : '' }}
                       </button>
                     }
                   </mat-card>
@@ -146,33 +174,60 @@ type WizardStep = 'trip' | 'seat' | 'passenger' | 'confirmation';
                 @case ('passenger') {
                   <mat-card class="card-surface step-card">
                     <div class="step-header">
-                      <h2>3. Passenger Information — Seat {{ selectedSeat()?.seatNumber }}</h2>
+                      <h2>3. Passenger Information — {{ selectedSeats().length }} Seat{{ selectedSeats().length > 1 ? 's' : '' }}</h2>
                       <button mat-button (click)="step.set('seat')"><mat-icon>arrow_back</mat-icon> Back</button>
                     </div>
-                    <form [formGroup]="passengerForm" (ngSubmit)="sellTicket()" class="grid-2">
-                      <mat-form-field appearance="outline">
-                        <mat-label>Passenger Name *</mat-label>
-                        <input matInput formControlName="passengerName" />
-                      </mat-form-field>
-                      <mat-form-field appearance="outline">
-                        <mat-label>Mobile Number *</mat-label>
-                        <input matInput formControlName="mobileNumber" maxlength="11">
-                        <mat-error *ngIf="passengerForm.get('mobileNumber')?.hasError('required')">Mobile is required</mat-error>
-                        <mat-error *ngIf="passengerForm.get('mobileNumber')?.hasError('pattern')">Numbers only, max 11 digits</mat-error>
-                      </mat-form-field>
-                      <mat-form-field appearance="outline">
-                        <mat-label>NID / Passport (optional)</mat-label>
-                        <input matInput formControlName="nidOrPassport" />
-                      </mat-form-field>
-                      <mat-form-field appearance="outline">
-                        <mat-label>Gender (optional)</mat-label>
-                        <mat-select formControlName="gender">
-                          <mat-option value="Male">Male</mat-option>
-                          <mat-option value="Female">Female</mat-option>
-                          <mat-option value="Other">Other</mat-option>
-                        </mat-select>
-                      </mat-form-field>
-                      <mat-form-field appearance="outline">
+                    <form [formGroup]="bookingForm" (ngSubmit)="sellTickets()">
+                      <div formArrayName="passengers">
+                        @for (passenger of passengers.controls; track $index; let i = $index) {
+                          <div [formGroupName]="i" class="passenger-card">
+                            <h4>
+                              @if (sameForAll) {
+                                Passenger Details
+                              } @else {
+                                Passenger {{ i + 1 }} · Seat {{ selectedSeats()[i]?.seatNumber }}
+                              }
+                            </h4>
+                            <div class="grid-2">
+                              <mat-form-field appearance="outline">
+                                <mat-label>Full Name *</mat-label>
+                                <input matInput formControlName="name" placeholder="As per ID" />
+                                <mat-error *ngIf="passenger.get('name')?.hasError('required')">Name is required</mat-error>
+                              </mat-form-field>
+                              <mat-form-field appearance="outline">
+                                <mat-label>Mobile Number *</mat-label>
+                                <input matInput formControlName="mobile" placeholder="01XXXXXXXXX" maxlength="11" />
+                                <mat-error *ngIf="passenger.get('mobile')?.hasError('required')">Mobile is required</mat-error>
+                                <mat-error *ngIf="passenger.get('mobile')?.hasError('pattern')">Numbers only, max 11 digits</mat-error>
+                              </mat-form-field>
+                              <mat-form-field appearance="outline">
+                                <mat-label>Gender</mat-label>
+                                <mat-select formControlName="gender">
+                                  <mat-option value="Male">Male</mat-option>
+                                  <mat-option value="Female">Female</mat-option>
+                                  <mat-option value="Other">Other</mat-option>
+                                </mat-select>
+                              </mat-form-field>
+                              <mat-form-field appearance="outline">
+                                <mat-label>Age</mat-label>
+                                <input matInput type="number" formControlName="age" min="0" max="120" />
+                              </mat-form-field>
+                              <mat-form-field appearance="outline">
+                                <mat-label>NID / Passport</mat-label>
+                                <input matInput formControlName="nid" />
+                              </mat-form-field>
+                            </div>
+                          </div>
+                        }
+                      </div>
+
+                      @if (selectedSeats().length > 1) {
+                        <mat-checkbox formControlName="sameForAll" (change)="onSameForAllChange()" class="same-for-all">
+                          Same passenger for all seats
+                        </mat-checkbox>
+                      }
+
+                      <mat-form-field appearance="outline" class="full-width">
                         <mat-label>Payment Method</mat-label>
                         <mat-select formControlName="paymentMethod">
                           <mat-option [value]="0">Cash</mat-option>
@@ -187,7 +242,7 @@ type WizardStep = 'trip' | 'seat' | 'passenger' | 'confirmation';
 
                       <div class="grid-span-2 actions-row">
                         <button mat-button type="button" (click)="step.set('seat')">Back</button>
-                        <button mat-flat-button color="primary" type="submit" [disabled]="passengerForm.invalid || selling()">
+                        <button mat-flat-button color="primary" type="submit" [disabled]="bookingForm.invalid || selling()">
                           @if (selling()) {
                             <mat-spinner diameter="18" />
                           } @else {
@@ -200,30 +255,35 @@ type WizardStep = 'trip' | 'seat' | 'passenger' | 'confirmation';
                 }
 
                 @case ('confirmation') {
-                  <mat-card class="card-surface step-card ticket-stub">
+                  <mat-card class="card-surface step-card">
                     <div class="ticket-stub__header">
                       <mat-icon class="ticket-stub__check">check_circle</mat-icon>
-                      <h2>Ticket Sold Successfully</h2>
+                      <h2>Tickets Sold Successfully</h2>
                     </div>
-                    @if (soldTicket(); as t) {
-                      <dl class="ticket-details mono">
-                        <dt>Ticket No.</dt><dd>{{ t.ticketNumber }}</dd>
-                        <dt>Passenger</dt><dd>{{ t.passengerName }}</dd>
-                        <dt>Mobile</dt><dd>{{ t.mobileNumber }}</dd>
-                        <dt>Route</dt><dd>{{ t.routeName }}</dd>
-                        <dt>Bus</dt><dd>{{ t.busNumber }}</dd>
-                        <dt>Seat</dt><dd>{{ t.seatNumber }}</dd>
-                        <dt>Travel Date</dt><dd>{{ t.travelDate }}</dd>
-                        <dt>Departure</dt><dd>{{ t.departureTime.slice(0, 5) }}</dd>
-                        <dt>Fare</dt><dd>৳{{ t.fareAmount }}</dd>
-                        <dt>Status</dt><dd>{{ ticketStatusLabel(t.status) }}</dd>
-                      </dl>
+                    @if (soldTickets().length > 0) {
+                      <div class="sold-tickets-list">
+                        @for (ticket of soldTickets(); track ticket.id) {
+                          <div class="ticket-card">
+                            <div class="ticket-card__header">
+                              <strong>{{ ticket.ticketNumber }}</strong>
+                              <span class="board-chip board-chip--sold">{{ ticketStatusLabel(ticket.status) }}</span>
+                            </div>
+                            <dl class="ticket-details mono">
+                              <dt>Passenger</dt><dd>{{ ticket.passengerName }}</dd>
+                              <dt>Mobile</dt><dd>{{ ticket.mobileNumber }}</dd>
+                              <dt>Gender</dt><dd>{{ ticket.gender || '—' }}</dd>
+                              <dt>Age</dt><dd>{{ ticket.age ?? '—' }}</dd>
+                              <dt>Bus</dt><dd>{{ ticket.busNumber }}</dd>
+                              <dt>Seat</dt><dd>{{ ticket.seatNumber }}</dd>
+                              <dt>Travel Date</dt><dd>{{ ticket.travelDate }}</dd>
+                              <dt>Departure</dt><dd>{{ ticket.departureTime?.slice(0, 5) }}</dd>
+                              <dt>Fare</dt><dd>৳{{ ticket.fareAmount }}</dd>
+                            </dl>
+                          </div>
+                        }
+                      </div>
                     }
                     <div class="actions-row">
-                      <button mat-button (click)="printTicket()">
-                        <mat-icon>print</mat-icon>
-                        Print Ticket
-                      </button>
                       <button mat-flat-button color="primary" (click)="resetWizard()">Sell Another Ticket</button>
                     </div>
                   </mat-card>
@@ -376,7 +436,7 @@ type WizardStep = 'trip' | 'seat' | 'passenger' | 'confirmation';
                     </ng-container>
                     <ng-container matColumnDef="ref">
                       <th mat-header-cell *matHeaderCellDef>Transaction Ref</th>
-                      <td mat-cell *matCellDef="let p"><span class="mono">{{ p.transactionRef }}</span></td>
+                      <td mat-cell *matCellDef="let p">{{ p.transactionRef }}</td>
                     </ng-container>
                     <ng-container matColumnDef="actions">
                       <th mat-header-cell *matHeaderCellDef></th>
@@ -419,13 +479,14 @@ type WizardStep = 'trip' | 'seat' | 'passenger' | 'confirmation';
       .loading-row { display: flex; justify-content: center; padding: 24px; }
       .empty-state { color: var(--color-text-muted); padding: 16px 0; }
       table { width: 100%; margin-top: 12px; }
-      .legend { display: flex; gap: 8px; margin-bottom: 16px; }
+
+      .legend { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+      .selected-seats-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; color: var(--color-text-muted); font-size: 0.85rem; }
       .seat-grid {
         display: grid;
-        grid-template-columns: repeat(4, 48px);
-        gap: 10px;
+        gap: 0;
+        justify-content: center;
         margin-bottom: 20px;
-        max-width: 260px;
       }
       .seat {
         font-family: var(--font-mono);
@@ -438,16 +499,35 @@ type WizardStep = 'trip' | 'seat' | 'passenger' | 'confirmation';
         background: var(--color-available-bg);
         color: var(--color-available);
         cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
       }
+      .seat:hover:not(.seat--sold):not(.seat--inactive):not(.seat--driver):not(.seat--selected) { transform: scale(1.05); }
       .seat--sold { border-color: var(--color-sold); background: var(--color-sold-bg); color: var(--color-sold); cursor: not-allowed; }
       .seat--inactive { border-color: var(--color-outofservice); background: var(--color-outofservice-bg); color: var(--color-outofservice); cursor: not-allowed; }
-      .seat--selected { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+      .seat--selected { outline: 2px solid var(--color-accent); outline-offset: 2px; background: var(--color-accent); color: #fff; border-color: var(--color-accent); }
+      .seat--male { background: #e3f2fd; border-color: #90caf9; color: #1565c0; }
+      .seat--female { background: #fce4ec; border-color: #f48fb1; color: #c2185b; }
+      .seat--driver { border-color: #ff9800; background: #fff3e0; color: #e65100; cursor: default; }
+      .driver-icon { font-size: 1.1rem; }
+      .passenger-initials { font-size: 0.6rem; font-weight: 700; }
+      .driver-chip { background: #fff3e0; color: #e65100; border-color: #ff9800; }
+
+      .passenger-card { margin-bottom: 1rem; padding: 1rem; border: 1px solid #e0e0e0; border-radius: 8px; background: #fafafa; }
+      .passenger-card h4 { margin: 0 0 0.75rem; color: #333; font-size: 0.95rem; }
+      .same-for-all { margin: 0.5rem 0 1rem; }
+
       .ticket-stub { border-left: 4px dashed var(--color-accent); max-width: 420px; }
       .ticket-stub__header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
       .ticket-stub__check { color: var(--color-available); }
-      .ticket-details { display: grid; grid-template-columns: auto 1fr; gap: 4px 16px; margin-bottom: 20px; }
+      .sold-tickets-list { display: flex; flex-direction: column; gap: 16px; margin-bottom: 20px; }
+      .ticket-card { border: 1px solid #e0e0e0; border-radius: 8px; padding: 16px; background: #fafafa; }
+      .ticket-card__header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+      .ticket-details { display: grid; grid-template-columns: auto 1fr; gap: 4px 16px; }
       .ticket-details dt { color: var(--color-text-muted); }
       .ticket-details dd { margin: 0; font-weight: 600; }
+
       .cancel-panel { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--color-border); max-width: 420px; }
     `,
   ],
@@ -459,7 +539,6 @@ export class BookingComponent {
   private readonly schedulesService = inject(SchedulesService);
   private readonly toast = inject(ToastService);
 
-  // --- Sell Ticket wizard state ---
   protected readonly step = signal<WizardStep>('trip');
   protected readonly routes = signal<RouteDto[]>([]);
   protected readonly trips = signal<TripDto[]>([]);
@@ -467,25 +546,11 @@ export class BookingComponent {
   protected readonly selectedTrip = signal<TripDto | null>(null);
   protected readonly seats = signal<SeatAvailabilityDto[]>([]);
   protected readonly loadingSeats = signal(false);
-  protected readonly selectedSeat = signal<SeatAvailabilityDto | null>(null);
+  protected readonly selectedSeats = signal<SeatAvailabilityDto[]>([]);
+  protected readonly lastSelectedSeatId = signal<string | null>(null);
   protected readonly selling = signal(false);
-  protected readonly soldTicket = signal<TicketDto | null>(null);
+  protected readonly soldTickets = signal<TicketDto[]>([]);
 
-  protected readonly tripForm = this.fb.nonNullable.group({
-    routeId: [''],
-    travelDate: [new Date().toISOString().slice(0, 10)],
-  });
-
-  protected readonly passengerForm = this.fb.nonNullable.group({
-    passengerName: ['', Validators.required],
-    mobileNumber: ['', [Validators.required, Validators.pattern('^[0-9]{0,11}$'), Validators.maxLength(11)]],
-    nidOrPassport: [''],
-    gender: [''],
-    paymentMethod: [0, Validators.required],
-    remarks: [''],
-  });
-
-  // --- Search & Cancel state ---
   protected readonly searchForm = this.fb.nonNullable.group({
     searchBy: [TicketSearchField.TicketNumber],
     searchText: [''],
@@ -496,7 +561,6 @@ export class BookingComponent {
   protected readonly cancelReason = this.fb.nonNullable.control('');
   protected readonly searchColumns = ['ticketNumber', 'passenger', 'trip', 'date', 'status', 'actions'];
 
-  // --- Payments state ---
   protected readonly paymentFilterForm = this.fb.nonNullable.group({
     status: [-1],
     method: [-1],
@@ -505,6 +569,34 @@ export class BookingComponent {
   protected readonly loadingPayments = signal(false);
   protected readonly paymentsLoaded = signal(false);
   protected readonly paymentColumns = ['ticket', 'passenger', 'amount', 'method', 'status', 'ref', 'actions'];
+
+  protected readonly tripForm = this.fb.nonNullable.group({
+    routeId: [''],
+    travelDate: [new Date().toISOString().slice(0, 10)],
+  });
+
+  protected readonly bookingForm = this.fb.nonNullable.group({
+    sameForAll: [true],
+    passengers: this.fb.array([
+      this.fb.nonNullable.group({
+        name: ['', Validators.required],
+        mobile: ['', [Validators.required, Validators.pattern('^[0-9]{0,11}$'), Validators.maxLength(11)]],
+        gender: [''],
+        age: [null as number | null],
+        nid: [''],
+      }),
+    ]),
+    paymentMethod: [0, Validators.required],
+    remarks: [''],
+  });
+
+  get passengers(): FormArray {
+    return this.bookingForm.controls['passengers'] as FormArray;
+  }
+
+  get sameForAll(): boolean {
+    return this.bookingForm.controls['sameForAll'].value;
+  }
 
   constructor() {
     this.routesService.list({ isActive: true, pageSize: 200 }).subscribe((result) => this.routes.set(result.items));
@@ -523,59 +615,151 @@ export class BookingComponent {
 
   selectTrip(trip: TripDto): void {
     this.selectedTrip.set(trip);
-    this.selectedSeat.set(null);
+    this.selectedSeats.set([]);
+    this.lastSelectedSeatId.set(null);
     this.step.set('seat');
     this.loadingSeats.set(true);
 
     const travelDate = this.tripForm.getRawValue().travelDate;
-    this.bookingService.getAvailableSeats(trip.scheduleId, travelDate).subscribe((seats) => {
-      this.seats.set(seats);
-      this.loadingSeats.set(false);
+    this.bookingService.getAvailableSeats(trip.scheduleId, travelDate).subscribe({
+      next: (seats) => {
+        this.seats.set(seats);
+        this.loadingSeats.set(false);
+      },
+      error: () => {
+        this.toast.error('Failed to load seat map.');
+        this.loadingSeats.set(false);
+      },
     });
+  }
+
+  toggleSeat(seat: SeatAvailabilityDto): void {
+    if (seat.isSold || !seat.isInService || seat.isDriver) return;
+
+    const current = this.selectedSeats();
+    const index = current.findIndex(s => s.seatId === seat.seatId);
+    if (index >= 0) {
+      current.splice(index, 1);
+      this.lastSelectedSeatId.set(current.length > 0 ? current[current.length - 1].seatId : null);
+    } else {
+      if (current.length >= 10) {
+        this.toast.error('You can select up to 10 seats.');
+        return;
+      }
+      current.push(seat);
+      this.lastSelectedSeatId.set(seat.seatId);
+      if (current.length > 1) {
+        const sameForAllControl = this.bookingForm.get('sameForAll');
+        if (sameForAllControl?.value) {
+          sameForAllControl.setValue(false);
+        }
+      }
+    }
+    this.selectedSeats.set([...current]);
+    this.syncPassengers();
+  }
+
+  isSelected(seat: SeatAvailabilityDto): boolean {
+    return this.selectedSeats().some(s => s.seatId === seat.seatId);
+  }
+
+  clearSeats(): void {
+    this.selectedSeats.set([]);
+    this.lastSelectedSeatId.set(null);
+    this.syncPassengers();
+  }
+
+  getGridTemplateColumns(): string {
+    const seats = this.seats();
+    if (!seats.length) return 'repeat(4, 48px)';
+    const maxCol = Math.max(...seats.map(s => s.visualCol ?? 1));
+    return `repeat(${maxCol}, 48px)`;
+  }
+
+  getVisualRow(seat: SeatAvailabilityDto): number {
+    return seat.visualRow ?? 0;
+  }
+
+  getVisualCol(seat: SeatAvailabilityDto): number {
+    return seat.visualCol ?? 0;
+  }
+
+  getInitials(name: string): string {
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  }
+
+  createPassengerGroup(): FormGroup {
+    return this.fb.nonNullable.group({
+      name: ['', Validators.required],
+      mobile: ['', [Validators.required, Validators.pattern('^[0-9]{0,11}$'), Validators.maxLength(11)]],
+      gender: [''],
+      age: [null as number | null],
+      nid: [''],
+    });
+  }
+
+  syncPassengers(): void {
+    const count = this.sameForAll ? 1 : this.selectedSeats().length;
+    while (this.passengers.length < count) {
+      this.passengers.push(this.createPassengerGroup());
+    }
+    while (this.passengers.length > count) {
+      this.passengers.removeAt(this.passengers.length - 1);
+    }
+  }
+
+  onSameForAllChange(): void {
+    this.syncPassengers();
   }
 
   seatClassLabel(seat: SeatAvailabilityDto): string {
     return `${SeatClassLabel[seat.class]}${seat.isSold ? ' · Sold' : seat.isInService ? ' · Available' : ' · Out of service'}`;
   }
 
-  sellTicket(): void {
-    const trip = this.selectedTrip();
-    const seat = this.selectedSeat();
-    if (!trip || !seat || this.passengerForm.invalid) return;
+  sellTickets(): void {
+    if (this.bookingForm.invalid || this.selectedSeats().length === 0 || !this.selectedTrip()) return;
 
     this.selling.set(true);
-    const value = this.passengerForm.getRawValue();
+    const value = this.bookingForm.getRawValue();
+    const trip = this.selectedTrip()!;
     const travelDate = this.tripForm.getRawValue().travelDate;
+    const selected = this.selectedSeats();
+    const passengers = value.passengers as any[];
 
-    this.bookingService
-      .sellTicket({
-        scheduleId: trip.scheduleId,
-        seatId: seat.seatId,
-        travelDate,
-        passengerName: value.passengerName,
-        mobileNumber: value.mobileNumber,
-        fareAmount: trip.fareAmount,
-        paymentMethod: value.paymentMethod,
-        nidOrPassport: value.nidOrPassport || null,
-        gender: value.gender || null,
-        remarks: value.remarks || null,
-      })
-      .subscribe({
-        next: (ticket) => {
-          this.selling.set(false);
-          this.soldTicket.set(ticket);
-          this.step.set('confirmation');
-        },
-        error: (error: HttpErrorResponse) => {
-          this.selling.set(false);
-          const problem = error.error as ProblemDetails | undefined;
-          this.toast.error(problem?.title ?? problem?.detail ?? 'Could not sell this ticket.');
-          if (error.status === 409) {
-            // Someone else sold this seat first - refresh the seat map so the wizard reflects reality.
-            this.selectTrip(trip);
-          }
-        },
-      });
+    const request: SellTicketsRequest = {
+      scheduleId: trip.scheduleId,
+      travelDate,
+      items: selected.map((seat, i) => {
+        const p = passengers[Math.min(i, passengers.length - 1)];
+        return {
+          seatId: seat.seatId,
+          passengerName: p.name,
+          mobileNumber: p.mobile,
+          fareAmount: trip.fareAmount,
+          paymentMethod: value.paymentMethod as PaymentMethod,
+          nidOrPassport: p.nid || undefined,
+          gender: p.gender || undefined,
+          age: p.age || undefined,
+        };
+      }),
+      remarks: value.remarks || undefined,
+    };
+
+    this.bookingService.sellTickets(request).subscribe({
+      next: (tickets) => {
+        this.selling.set(false);
+        this.soldTickets.set(tickets);
+        this.step.set('confirmation');
+      },
+      error: (err: HttpErrorResponse) => {
+        this.selling.set(false);
+        const problem = err.error as ProblemDetails | undefined;
+        this.toast.error(problem?.title ?? problem?.detail ?? 'Could not complete sale. Please try again.');
+        if (err.status === 409) {
+          this.selectTrip(trip);
+        }
+      },
+    });
   }
 
   printTicket(): void {
@@ -585,9 +769,11 @@ export class BookingComponent {
   resetWizard(): void {
     this.step.set('trip');
     this.selectedTrip.set(null);
-    this.selectedSeat.set(null);
-    this.soldTicket.set(null);
-    this.passengerForm.reset({ paymentMethod: 0 });
+    this.selectedSeats.set([]);
+    this.lastSelectedSeatId.set(null);
+    this.soldTickets.set([]);
+    this.bookingForm.reset({ sameForAll: true, paymentMethod: 0, remarks: '' });
+    this.syncPassengers();
     this.loadTrips();
   }
 

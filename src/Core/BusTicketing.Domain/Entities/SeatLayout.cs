@@ -83,8 +83,12 @@ public class SeatLayout : BaseEntity
                 seatIndex++;
             }
 
-            var leftSeats = config.SeatsPerRow != null && config.SeatsPerRow.Count > r ? config.SeatsPerRow[r].Left : 2;
-            var rightSeats = config.SeatsPerRow != null && config.SeatsPerRow.Count > r ? config.SeatsPerRow[r].Right : 2;
+            var leftSeats = r == rows - 1 && config.LastRowConfig != null
+                ? config.LastRowConfig.Left
+                : (config.SeatsPerRow != null && config.SeatsPerRow.Count > r ? config.SeatsPerRow[r].Left : 2);
+            var rightSeats = r == rows - 1 && config.LastRowConfig != null
+                ? config.LastRowConfig.Right
+                : (config.SeatsPerRow != null && config.SeatsPerRow.Count > r ? config.SeatsPerRow[r].Right : 2);
 
             for (var s = 0; s < leftSeats; s++)
             {
@@ -114,6 +118,7 @@ public class RealBusConfig
     public bool DriverSeat { get; set; } = true;
     public int AisleGap { get; set; } = 1;
     public List<RowSeatGroup>? SeatsPerRow { get; set; }
+    public RowSeatGroup? LastRowConfig { get; set; }
 }
 
 public class RowSeatGroup

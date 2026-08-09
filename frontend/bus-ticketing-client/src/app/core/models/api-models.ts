@@ -67,6 +67,7 @@ export interface TicketDto {
   mobileNumber: string;
   nidOrPassport: string | null;
   gender: string | null;
+  age: number | null;
   remarks: string | null;
   fareAmount: number;
   status: TicketStatus;
@@ -88,6 +89,7 @@ export interface SellTicketRequest {
   paymentMethod: PaymentMethod;
   nidOrPassport?: string;
   gender?: string;
+  age?: number;
   remarks?: string;
 }
 
@@ -106,6 +108,7 @@ export interface SellTicketItem {
   paymentMethod: PaymentMethod;
   nidOrPassport?: string;
   gender?: string;
+  age?: number;
 }
 
 export interface PaginatedList<T> {

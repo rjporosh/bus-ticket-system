@@ -66,7 +66,7 @@ public class SearchTicketsQueryHandler : IRequestHandler<SearchTicketsQuery, Pag
             .Select(x => new TicketDto(
                 x.Ticket.Id, x.Ticket.TicketNumber, x.Ticket.ScheduleId, x.Ticket.Schedule.Bus.Number, x.Ticket.Schedule.Route.Name,
                 x.Ticket.SeatId, x.Ticket.Seat.SeatNumber, x.Ticket.TravelDate, x.Ticket.Schedule.DepartureTime,
-                x.Ticket.PassengerName, x.Ticket.MobileNumber, x.Ticket.NidOrPassport, x.Ticket.Gender, x.Ticket.Remarks,
+                x.Ticket.PassengerName, x.Ticket.MobileNumber, x.Ticket.NidOrPassport, x.Ticket.Gender, x.Ticket.Age, x.Ticket.Remarks,
                 x.Ticket.FareAmount, x.Ticket.Status, x.SellerUsername, x.Ticket.SoldAtUtc,
                 x.Ticket.CancellationReason, x.Ticket.CancelledAtUtc, null, null));
 
