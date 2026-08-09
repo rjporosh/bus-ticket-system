@@ -8,15 +8,17 @@ import { ProblemDetails } from '../models/api-models';
 
 /** Attaches the bearer access token; on a 401 (expired token) attempts one silent refresh-and-retry before giving up. */
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
-  const auth = inject(AuthService);
+  const auth = inject<AuthService>(AuthService);
   const token = auth.accessToken();
 
-  const authedReq = token && !req.url.includes('/auth/') ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } }) : req;
+  const anonymousAuthPaths = ['/auth/login', '/auth/register', '/auth/refresh'];
+  const isAnonymousAuth = anonymousAuthPaths.some(p => req.url.includes(p));
+  const authedReq = token && !isAnonymousAuth ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } }) : req;
 
   return next(authedReq).pipe(
     catchError((error: unknown) => {
       const isAuthEndpoint = req.url.includes('/auth/');
-      if (error instanceof HttpErrorResponse && error.status === 401 && !isAuthEndpoint && auth.getRefreshTokenValue()) {
+      if (error instanceof HttpErrorResponse && error.status === 401 && !isAnonymousAuth && auth.getRefreshTokenValue()) {
         return auth.refresh().pipe(
           switchMap(() => {
             const retried = req.clone({ setHeaders: { Authorization: `Bearer ${auth.accessToken()}` } });
@@ -35,14 +37,14 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
 /** Tracks in-flight requests for the global top-loading-bar. */
 export const loadingInterceptor: HttpInterceptorFn = (req, next) => {
-  const loading = inject(LoadingService);
+  const loading = inject<LoadingService>(LoadingService);
   loading.start();
   return next(req).pipe(finalize(() => loading.stop()));
 };
 
 /** Surfaces API errors as toasts, using ASP.NET Core's ProblemDetails shape when available. */
 export const errorInterceptor: HttpInterceptorFn = (req, next) => {
-  const toast = inject(ToastService);
+  const toast = inject<ToastService>(ToastService);
 
   return next(req).pipe(
     catchError((error: unknown) => {

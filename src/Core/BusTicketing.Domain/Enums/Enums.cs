@@ -5,6 +5,7 @@ public static class SystemRoles
 {
     public const string Admin = "Admin";
     public const string BoothStaff = "BoothStaff";
+    public const string Customer = "Customer";
 }
 
 public enum SeatClass
@@ -40,4 +41,10 @@ public enum DayOfWeekFlag
     Saturday = 1 << 5,
     Sunday = 1 << 6,
     Daily = Monday | Tuesday | Wednesday | Thursday | Friday | Saturday | Sunday
+}
+
+public enum LayoutType
+{
+    StandardGrid = 0,
+    RealBus = 1
 }

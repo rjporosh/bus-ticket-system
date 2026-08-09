@@ -97,3 +97,12 @@ button:focus-visible,
     transition-duration: 0.001ms !important;
   }
 }
+
+// Print Ticket support: hide app chrome so only the ticket-stub confirmation card prints.
+@media print {
+  app-shell .sidebar,
+  app-shell .topbar,
+  .mat-mdc-tab-header {
+    display: none !important;
+  }
+}

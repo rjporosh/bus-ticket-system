@@ -12,7 +12,7 @@ namespace BusTicketing.Api.Controllers.V1;
 [ApiController]
 [ApiVersion("1.0")]
 [Route("api/v{version:apiVersion}/users")]
-[Authorize(Roles = SystemRoles.Admin)]
+[Authorize(Policy = "Permission:UserManage")]
 [Produces("application/json")]
 public class UsersController : ControllerBase
 {

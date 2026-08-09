@@ -1,10 +1,13 @@
 using System.Text;
+using System.Text;
 using BusTicketing.Application.Common.Interfaces;
 using BusTicketing.Application.Common.Models;
+using BusTicketing.Domain.Enums;
 using BusTicketing.Infrastructure.Persistence;
 using BusTicketing.Infrastructure.Persistence.Providers;
 using BusTicketing.Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -19,11 +22,25 @@ public static class DependencyInjection
         services.Configure<JwtSettings>(configuration.GetSection(JwtSettings.SectionName));
 
         services.AddScoped<AuditableEntityInterceptor>();
+        services.AddSingleton<QueryLoggingInterceptor>();
 
+        // The integration tests (WebApplicationFactory<Program>) set "Testing" in
+        // MemoryDatabase and config to disable the real provider. This avoids the
+        // Npgsql/InMemory provider conflict by short-circuiting before UseConfiguredProvider.
+        var inTesting = configuration.GetValue<string>("Database:Testing") == "true";
         services.AddDbContext<ApplicationDbContext>((sp, options) =>
         {
-            options.UseConfiguredProvider(configuration);
+            if (inTesting)
+            {
+                var testingDatabaseName = configuration.GetValue("Database:TestingDatabaseName", "BusTicketingTesting");
+                options.UseInMemoryDatabase(testingDatabaseName);
+            }
+            else
+            {
+                options.UseConfiguredProvider(configuration);
+            }
             options.AddInterceptors(sp.GetRequiredService<AuditableEntityInterceptor>());
+            options.AddInterceptors(sp.GetRequiredService<QueryLoggingInterceptor>());
         });
 
         services.AddScoped<IApplicationDbContext>(sp => sp.GetRequiredService<ApplicationDbContext>());

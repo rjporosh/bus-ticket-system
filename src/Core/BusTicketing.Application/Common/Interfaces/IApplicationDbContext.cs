@@ -20,7 +20,11 @@ public interface IApplicationDbContext
     DbSet<SeatLayout> SeatLayouts { get; }
     DbSet<Seat> Seats { get; }
     DbSet<Schedule> Schedules { get; }
+    DbSet<Ticket> Tickets { get; }
+    DbSet<Payment> Payments { get; }
     DbSet<AuditLog> AuditLogs { get; }
+    DbSet<TicketNumberCounter> TicketNumberCounters { get; }
+    DbSet<RolePermission> RolePermissions { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 

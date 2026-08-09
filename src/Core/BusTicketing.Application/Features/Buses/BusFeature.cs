@@ -16,7 +16,9 @@ public record BusDto(
     int TotalSeats,
     bool IsActive,
     int SeatLayoutRows,
-    int SeatLayoutColumns);
+    int SeatLayoutColumns,
+    LayoutType SeatLayoutType,
+    string? SeatLayoutConfig);
 
 /// <summary>
 /// Creates a bus and, in the same transaction, generates its seat layout
@@ -29,7 +31,9 @@ public record CreateBusCommand(
     string OperatorName,
     int Rows,
     int Columns,
-    SeatClass DefaultSeatClass) : IRequest<Result<BusDto>>;
+    SeatClass DefaultSeatClass,
+    LayoutType LayoutType = LayoutType.StandardGrid,
+    string? LayoutConfigJson = null) : IRequest<Result<BusDto>>;
 
 public class CreateBusCommandValidator : AbstractValidator<CreateBusCommand>
 {
@@ -53,9 +57,10 @@ public class CreateBusCommandHandler : IRequestHandler<CreateBusCommand, Result<
         if (duplicate)
             return Result.Failure<BusDto>(Error.Conflict($"A bus with registration \"{request.RegistrationNumber}\" already exists."));
 
-        var totalSeats = request.Rows * request.Columns;
-        var bus = Bus.Create(request.Number, request.RegistrationNumber, request.OperatorName, totalSeats);
-        var layout = SeatLayout.Generate(bus.Id, request.Rows, request.Columns, request.DefaultSeatClass);
+        var bus = Bus.Create(request.Number, request.RegistrationNumber, request.OperatorName, request.Rows * request.Columns);
+        var layout = SeatLayout.Generate(bus.Id, request.Rows, request.Columns, request.DefaultSeatClass, request.LayoutType, request.LayoutConfigJson);
+        if (layout.Seats.Count != bus.TotalSeats)
+            bus.SetTotalSeats(layout.Seats.Count);
         bus.AssignSeatLayout(layout);
 
         await using var transaction = await _db.BeginTransactionAsync(cancellationToken);
@@ -70,7 +75,7 @@ public class CreateBusCommandHandler : IRequestHandler<CreateBusCommand, Result<
 
         return Result.Success(new BusDto(
             bus.Id, bus.Number, bus.RegistrationNumber, bus.OperatorName, bus.TotalSeats,
-            bus.IsActive, layout.Rows, layout.Columns));
+            bus.IsActive, layout.Rows, layout.Columns, layout.LayoutType, layout.LayoutConfigJson));
     }
 }
 
@@ -109,7 +114,9 @@ public class UpdateBusCommandHandler : IRequestHandler<UpdateBusCommand, Result<
 
         return Result.Success(new BusDto(
             bus.Id, bus.Number, bus.RegistrationNumber, bus.OperatorName, bus.TotalSeats,
-            bus.IsActive, bus.SeatLayout?.Rows ?? 0, bus.SeatLayout?.Columns ?? 0));
+            bus.IsActive, bus.SeatLayout?.Rows ?? 0, bus.SeatLayout?.Columns ?? 0,
+            bus.SeatLayout?.LayoutType ?? LayoutType.StandardGrid,
+            bus.SeatLayout?.LayoutConfigJson));
     }
 }
 
@@ -156,7 +163,9 @@ public class GetBusesQueryHandler : IRequestHandler<GetBusesQuery, PaginatedList
         var projected = query.OrderBy(b => b.Number).Select(b => new BusDto(
             b.Id, b.Number, b.RegistrationNumber, b.OperatorName, b.TotalSeats, b.IsActive,
             b.SeatLayout != null ? b.SeatLayout.Rows : 0,
-            b.SeatLayout != null ? b.SeatLayout.Columns : 0));
+            b.SeatLayout != null ? b.SeatLayout.Columns : 0,
+            b.SeatLayout != null ? b.SeatLayout.LayoutType : LayoutType.StandardGrid,
+            b.SeatLayout != null ? b.SeatLayout.LayoutConfigJson : null));
 
         return PaginatedList<BusDto>.CreateAsync(projected, request.PageNumber, request.PageSize, cancellationToken);
     }
@@ -176,6 +185,8 @@ public class GetBusByIdQueryHandler : IRequestHandler<GetBusByIdQuery, Result<Bu
             ? Result.Failure<BusDto>(Error.NotFound($"Bus {request.Id} was not found."))
             : Result.Success(new BusDto(
                 bus.Id, bus.Number, bus.RegistrationNumber, bus.OperatorName, bus.TotalSeats,
-                bus.IsActive, bus.SeatLayout?.Rows ?? 0, bus.SeatLayout?.Columns ?? 0));
+                bus.IsActive, bus.SeatLayout?.Rows ?? 0, bus.SeatLayout?.Columns ?? 0,
+                bus.SeatLayout?.LayoutType ?? LayoutType.StandardGrid,
+                bus.SeatLayout?.LayoutConfigJson));
     }
 }

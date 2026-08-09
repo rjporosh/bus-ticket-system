@@ -1,9 +1,6 @@
-using BusTicketing.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace BusTicketing.IntegrationTests;
 
@@ -25,17 +22,17 @@ public class ApiWebApplicationFactory : WebApplicationFactory<Program>
             configBuilder.AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["SeedData:Enabled"] = "false",
+                ["Database:Testing"] = "true",
+                ["Database:TestingDatabaseName"] = _databaseName,
                 ["Jwt:Secret"] = "integration-test-secret-key-at-least-32-characters-long",
                 ["Jwt:Issuer"] = "BusTicketingSystem.Tests",
                 ["Jwt:Audience"] = "BusTicketingSystem.Tests.Clients"
             });
         });
 
-        builder.ConfigureServices(services =>
-        {
-            services.RemoveAll<DbContextOptions<ApplicationDbContext>>();
-            services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseInMemoryDatabase(_databaseName));
-        });
+        // The Infrastructure DI handles the InMemory provider selection based on
+        // Database:Testing=true and uses Database:TestingDatabaseName to keep each
+        // factory's database isolated (xUnit runs test classes in parallel, so a
+        // shared hardcoded name caused cross-factory data races).
     }
 }

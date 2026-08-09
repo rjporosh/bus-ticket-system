@@ -17,6 +17,17 @@ public class AuthController : ControllerBase
 
     public AuthController(ISender sender) => _sender = sender;
 
+    /// <summary>Registers a new customer account and returns a short-lived access token and a rotating refresh token.</summary>
+    [HttpPost("register")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(AuthResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<IResult> Register([FromBody] RegisterCommand command, CancellationToken cancellationToken)
+    {
+        var result = await _sender.Send(command, cancellationToken);
+        return result.ToApiResult();
+    }
+
     /// <summary>Authenticates a user with username and password, returning a short-lived access token and a rotating refresh token.</summary>
     [HttpPost("login")]
     [AllowAnonymous]

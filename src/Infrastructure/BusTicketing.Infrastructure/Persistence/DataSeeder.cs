@@ -17,10 +17,38 @@ public static class DataSeeder
 {
     public static async Task SeedAsync(ApplicationDbContext db, IPasswordHasher passwordHasher, ILogger logger)
     {
-        await db.Database.MigrateAsync();
+        // InMemory provider has no migrations; EnsureCreated is idempotent for testing.
+        if (db.Database.IsInMemory())
+        {
+            await db.Database.EnsureCreatedAsync();
+        }
+        else
+        {
+            await db.Database.MigrateAsync();
+        }
 
         var adminRole = await GetOrCreateRoleAsync(db, SystemRoles.Admin, "Full administrative access.", isSystemRole: true);
         var boothRole = await GetOrCreateRoleAsync(db, SystemRoles.BoothStaff, "Ticket booth staff: sell, cancel and search tickets.", isSystemRole: true);
+        var customerRole = await GetOrCreateRoleAsync(db, SystemRoles.Customer, "Self-service customer account.", isSystemRole: true);
+        await db.SaveChangesAsync();
+
+        await SeedPermissionsAsync(db, adminRole.Id, new[]
+        {
+            Permission.BookingSell, Permission.BookingCancel, Permission.BookingSearch, Permission.BookingViewOwn,
+            Permission.DashboardView, Permission.ScheduleManage, Permission.BusManage,
+            Permission.RouteManage, Permission.StationManage, Permission.UserManage,
+            Permission.RoleManage, Permission.PaymentManage, Permission.PaymentCapture,
+            Permission.PaymentRefund, Permission.PaymentFail,
+        }, logger);
+        await SeedPermissionsAsync(db, boothRole.Id, new[]
+        {
+            Permission.BookingSell, Permission.BookingCancel, Permission.BookingSearch, Permission.BookingViewOwn,
+            Permission.DashboardView, Permission.PaymentManage,
+        }, logger);
+        await SeedPermissionsAsync(db, customerRole.Id, new[]
+        {
+            Permission.BookingSell, Permission.BookingViewOwn, Permission.DashboardView,
+        }, logger);
         await db.SaveChangesAsync();
 
         await GetOrCreateUserAsync(db, passwordHasher, "admin", "admin@bus-ticketing.local", "Admin@12345", "System Administrator", adminRole.Id, null);
@@ -41,7 +69,7 @@ public static class DataSeeder
             buses.Add(await GetOrCreateBusAsync(db, $"Bus-{i}", $"DHK-METRO-{1000 + i}", "Green Line Paribahan"));
         await db.SaveChangesAsync();
 
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var today = DateOnly.FromDateTime(DateTime.Now);
         var departure = new TimeOnly(7, 0);
         var arrival = new TimeOnly(13, 0);
 
@@ -126,5 +154,24 @@ public static class DataSeeder
 
         var schedule = Schedule.Create(busId, routeId, departure, arrival, DayOfWeekFlag.Daily, effectiveFrom, null, fare);
         db.Schedules.Add(schedule);
+    }
+
+    private static async Task SeedPermissionsAsync(ApplicationDbContext db, Guid roleId, Permission[] permissions, ILogger logger)
+    {
+        try
+        {
+            foreach (var permission in permissions)
+            {
+                var exists = await db.RolePermissions.AnyAsync(rp => rp.RoleId == roleId && rp.Permission == permission);
+                if (!exists)
+                {
+                    db.RolePermissions.Add(RolePermission.Create(roleId, permission));
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Could not seed permissions for role {RoleId}. The RolePermissions table may not exist yet. Run EF Core migrations to enable fine-grained permissions.", roleId);
+        }
     }
 }

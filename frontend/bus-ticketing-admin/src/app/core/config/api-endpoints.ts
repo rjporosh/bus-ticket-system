@@ -1,0 +1,71 @@
+export const API_ENDPOINTS = {
+  auth: {
+    login: '/auth/login',
+    refresh: '/auth/refresh',
+    logout: '/auth/logout',
+  },
+  users: {
+    list: '/users',
+    get: (id: string) => `/users/${id}`,
+    create: '/users',
+    update: (id: string) => `/users/${id}`,
+    setActive: (id: string) => `/users/${id}/status`,
+  },
+  roles: {
+    list: '/roles',
+    create: '/roles',
+    update: (id: string) => `/roles/${id}`,
+  },
+  stations: {
+    list: '/stations',
+    get: (id: string) => `/stations/${id}`,
+    create: '/stations',
+    update: (id: string) => `/stations/${id}`,
+    setActive: (id: string) => `/stations/${id}/status`,
+  },
+  routes: {
+    list: '/routes',
+    get: (id: string) => `/routes/${id}`,
+    create: '/routes',
+    update: (id: string) => `/routes/${id}`,
+    setActive: (id: string) => `/routes/${id}/status`,
+  },
+  buses: {
+    list: '/buses',
+    get: (id: string) => `/buses/${id}`,
+    create: '/buses',
+    update: (id: string) => `/buses/${id}`,
+    setActive: (id: string) => `/buses/${id}/status`,
+    seatLayout: (busId: string) => `/buses/${busId}/seat-layout`,
+    setSeatStatus: (busId: string, seatId: string) => `/buses/${busId}/seat-layout/seats/${seatId}/status`,
+    reclassifySeat: (busId: string, seatId: string) => `/buses/${busId}/seat-layout/seats/${seatId}/class`,
+  },
+  schedules: {
+    list: '/schedules',
+    get: (id: string) => `/schedules/${id}`,
+    create: '/schedules',
+    update: (id: string) => `/schedules/${id}`,
+    setStatus: (id: string) => `/schedules/${id}/status`,
+    trips: '/schedules/trips',
+  },
+  booking: {
+    availableSeats: (scheduleId: string) => `/booking/schedules/${scheduleId}/seats`,
+    sellTicket: '/booking/tickets',
+    sellTickets: '/booking/tickets/batch',
+    cancelTicket: (ticketId: string) => `/booking/tickets/${ticketId}/cancel`,
+    search: '/booking/tickets',
+  },
+  payments: {
+    list: '/payments',
+    capture: (paymentId: string) => `/payments/${paymentId}/capture`,
+    refund: (paymentId: string) => `/payments/${paymentId}/refund`,
+    fail: (paymentId: string) => `/payments/${paymentId}/fail`,
+  },
+  dashboard: {
+    summary: '/dashboard/summary',
+  },
+  release: {
+    current: '/release/current',
+    notes: '/release/notes',
+  },
+} as const;

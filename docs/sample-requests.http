@@ -1,0 +1,171 @@
+@baseUrl = http://localhost:5000/api/v1
+@accessToken = REPLACE_AFTER_LOGIN
+@refreshToken = REPLACE_AFTER_LOGIN
+
+### Login as admin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "Admin@12345"
+}
+
+### Refresh the access token
+POST {{baseUrl}}/auth/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "{{refreshToken}}"
+}
+
+### Logout
+POST {{baseUrl}}/auth/logout
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "refreshToken": "{{refreshToken}}"
+}
+
+### List stations
+GET {{baseUrl}}/stations?pageNumber=1&pageSize=20
+Authorization: Bearer {{accessToken}}
+
+### Create a station (Admin)
+POST {{baseUrl}}/stations
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "name": "Sylhet Central Terminal",
+  "city": "Sylhet",
+  "address": "Amberkhana, Sylhet"
+}
+
+### List routes
+GET {{baseUrl}}/routes?pageNumber=1&pageSize=20
+Authorization: Bearer {{accessToken}}
+
+### Create a route (Admin) — replace station ids with real values from GET /stations
+POST {{baseUrl}}/routes
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "name": "Dhaka -> Sylhet",
+  "originStationId": "00000000-0000-0000-0000-000000000000",
+  "destinationStationId": "00000000-0000-0000-0000-000000000000",
+  "distanceKm": 247,
+  "estimatedDurationMinutes": 300
+}
+
+### List buses
+GET {{baseUrl}}/buses?pageNumber=1&pageSize=20
+Authorization: Bearer {{accessToken}}
+
+### Create a bus with an auto-generated 6x4 seat layout (Admin)
+POST {{baseUrl}}/buses
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "number": "Bus-7",
+  "registrationNumber": "DHK-METRO-1007",
+  "operatorName": "Green Line Paribahan",
+  "rows": 6,
+  "columns": 4,
+  "defaultSeatClass": 0
+}
+
+### Get a bus's seat layout — replace {busId}
+GET {{baseUrl}}/buses/00000000-0000-0000-0000-000000000000/seat-layout
+Authorization: Bearer {{accessToken}}
+
+### Create a schedule (Admin) — replace busId/routeId
+POST {{baseUrl}}/schedules
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "busId": "00000000-0000-0000-0000-000000000000",
+  "routeId": "00000000-0000-0000-0000-000000000000",
+  "departureTime": "07:00:00",
+  "arrivalTime": "13:00:00",
+  "daysOfWeek": 127,
+  "effectiveFrom": "2026-08-01",
+  "effectiveTo": null,
+  "fareAmount": 800
+}
+
+### Get today's resolved trips
+GET {{baseUrl}}/schedules/trips?travelDate=2026-08-02
+Authorization: Bearer {{accessToken}}
+
+### Create a custom role (Admin)
+POST {{baseUrl}}/roles
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "name": "Auditor",
+  "description": "Read-only access for compliance review"
+}
+
+### Create a user (Admin) — replace roleId
+POST {{baseUrl}}/users
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "username": "sylhet_staff_1",
+  "email": "sylhet.staff1@bus-ticketing.local",
+  "password": "Sylhet@12345",
+  "fullName": "Sylhet Booth Staff",
+  "roleId": "00000000-0000-0000-0000-000000000000",
+  "phoneNumber": null,
+  "boothName": "Sylhet"
+}
+
+### Get today's resolved trips (needed to find a scheduleId for booking)
+GET {{baseUrl}}/schedules/trips?travelDate=2026-08-02
+Authorization: Bearer {{accessToken}}
+
+### Get the seat map for a schedule on a travel date — replace scheduleId
+GET {{baseUrl}}/booking/schedules/00000000-0000-0000-0000-000000000000/seats?travelDate=2026-08-02
+Authorization: Bearer {{accessToken}}
+
+### Sell a ticket — replace scheduleId/seatId
+POST {{baseUrl}}/booking/tickets
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "scheduleId": "00000000-0000-0000-0000-000000000000",
+  "seatId": "00000000-0000-0000-0000-000000000000",
+  "travelDate": "2026-08-02",
+  "passengerName": "Rahim Uddin",
+  "mobileNumber": "01700000000",
+  "fareAmount": 800,
+  "paymentMethod": 0,
+  "nidOrPassport": null,
+  "gender": "Male",
+  "remarks": null
+}
+
+### Search a ticket by ticket number
+GET {{baseUrl}}/booking/tickets?searchBy=0&searchText=TKT-20260802-0001
+Authorization: Bearer {{accessToken}}
+
+### Cancel a ticket — replace ticketId
+POST {{baseUrl}}/booking/tickets/00000000-0000-0000-0000-000000000000/cancel
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "reason": "Passenger changed travel plan"
+}
+
+### Dashboard summary for today
+GET {{baseUrl}}/dashboard/summary?date=2026-08-02
+Authorization: Bearer {{accessToken}}

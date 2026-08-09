@@ -21,7 +21,11 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
     public DbSet<SeatLayout> SeatLayouts => Set<SeatLayout>();
     public DbSet<Seat> Seats => Set<Seat>();
     public DbSet<Schedule> Schedules => Set<Schedule>();
+    public DbSet<Ticket> Tickets => Set<Ticket>();
+    public DbSet<Payment> Payments => Set<Payment>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+    public DbSet<TicketNumberCounter> TicketNumberCounters => Set<TicketNumberCounter>();
+    public DbSet<RolePermission> RolePermissions => Set<RolePermission>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

@@ -1,5 +1,6 @@
 using BusTicketing.Application.Common.Interfaces;
 using BusTicketing.Application.Common.Models;
+using BusTicketing.Domain.Entities;
 using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -61,7 +62,8 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, Result<AuthResp
         var refreshTokenValue = _jwtTokenService.GenerateRefreshToken();
         var refreshTokenExpiresAt = _dateTime.UtcNow.AddDays(_jwtSettings.RefreshTokenExpiryDays);
 
-        user.IssueRefreshToken(refreshTokenValue, refreshTokenExpiresAt);
+        var refreshToken = RefreshToken.Create(user.Id, refreshTokenValue, refreshTokenExpiresAt);
+        _db.RefreshTokens.Add(refreshToken);
         await _db.SaveChangesAsync(cancellationToken);
 
         await _auditLog.LogAsync("Login", nameof(Domain.Entities.User), user.Id.ToString(), cancellationToken: cancellationToken);

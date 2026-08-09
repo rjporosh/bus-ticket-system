@@ -1,12 +1,17 @@
 using Asp.Versioning;
+using BusTicketing.Api.Authorization;
 using BusTicketing.Api.Middleware;
 using BusTicketing.Application;
 using BusTicketing.Application.Common.Interfaces;
+using BusTicketing.Domain.Enums;
 using BusTicketing.Infrastructure;
 using BusTicketing.Infrastructure.Persistence;
+using BusTicketing.Infrastructure.Services;
 using HealthChecks.UI.Client;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.OpenApi;
+using Microsoft.Extensions.DependencyInjection;
 using Scalar.AspNetCore;
 using Serilog;
 
@@ -16,10 +21,18 @@ Log.Logger = new LoggerConfiguration()
     .WriteTo.Console()
     .CreateBootstrapLogger();
 
+ICustomLogger? customLogger = null;
+
 try
 {
     var builder = WebApplication.CreateBuilder(args);
 
+    // ---- Custom Logging Setup -------------------------------------------
+    var logsRootPath = Path.Combine(builder.Environment.ContentRootPath, "logs");
+    customLogger = new CustomLogger(logsRootPath);
+    builder.Services.AddSingleton<ICustomLogger>(customLogger);
+
+    // ---- Serilog Configuration -------------------------------------------
     builder.Host.UseSerilog((context, services, configuration) => configuration
         .ReadFrom.Configuration(context.Configuration)
         .ReadFrom.Services(services)
@@ -27,7 +40,7 @@ try
         .Enrich.WithEnvironmentName()
         .WriteTo.Console()
         .WriteTo.File(
-            Path.Combine("logs", "log-.txt"),
+            Path.Combine(logsRootPath, "log-.txt"),
             rollingInterval: RollingInterval.Day,
             retainedFileCountLimit: 30));
 
@@ -55,16 +68,37 @@ try
     {
         options.AddPolicy("AllowConfiguredOrigins", policy =>
         {
-            var origins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
-            policy.WithOrigins(origins).AllowAnyHeader().AllowAnyMethod();
+            var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
+            if (allowedOrigins.Length > 0)
+            {
+                policy.WithOrigins(allowedOrigins).AllowAnyHeader().AllowAnyMethod();
+            }
+            else
+            {
+                policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
+            }
         });
     });
+
+    foreach (Permission permission in Enum.GetValues(typeof(Permission)))
+    {
+        builder.Services.AddAuthorization(options =>
+        {
+            options.AddPolicy($"Permission:{permission}", policy => policy.Requirements.Add(new PermissionRequirement(permission)));
+        });
+    }
+
+    builder.Services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
 
     var app = builder.Build();
 
     // ---- Pipeline ---------------------------------------------------------
     app.UseSerilogRequestLogging();
     app.UseMiddleware<GlobalExceptionMiddleware>();
+    app.UseMiddleware<RateLimitMiddleware>();
+    app.UseMiddleware<SecurityHeadersMiddleware>();
+    app.UseRuntimeErrorLogger();
+    app.UseGracefulShutdown();
 
     if (app.Environment.IsDevelopment())
     {
@@ -114,11 +148,34 @@ try
 catch (Exception ex)
 {
     Log.Fatal(ex, "Application terminated unexpectedly");
+    if (customLogger != null)
+    {
+        await customLogger.LogRuntimeErrorAsync("Application terminated unexpectedly during startup", ex);
+    }
 }
 finally
 {
     Log.CloseAndFlush();
 }
 
-/// <summary>Partial Program class so WebApplicationFactory&lt;Program&gt; can be used from integration tests.</summary>
+// ---- Graceful Shutdown Handlers -----------------------------------------
+if (customLogger != null)
+{
+    AppDomain.CurrentDomain.UnhandledException += (sender, e) =>
+    {
+        if (e.ExceptionObject is Exception ex)
+        {
+            Log.Error(ex, "Unhandled exception caught by AppDomain");
+            customLogger.LogRuntimeErrorAsync("Unhandled AppDomain exception", ex).GetAwaiter().GetResult();
+        }
+    };
+
+    TaskScheduler.UnobservedTaskException += (sender, e) =>
+    {
+        Log.Error(e.Exception, "Unobserved task exception");
+        customLogger.LogRuntimeErrorAsync("Unobserved task exception", e.Exception).GetAwaiter().GetResult();
+    };
+}
+
+/// <summary>Partial Program class so WebApplicationFactory<Program> can be used from integration tests.</summary>
 public partial class Program { }
