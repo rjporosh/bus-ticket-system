@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormArray, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatTableModule } from '@angular/material/table';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
@@ -11,9 +11,10 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog, MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { BusesService } from '../../core/services/feature-services';
 import { ToastService } from '../../core/services/toast.service';
-import { BusDto, SeatClassLabel, SeatDto, SeatLayoutDto } from '../../core/models/api-models';
+import { BusDto, SeatClassLabel, SeatDto, SeatLayoutDto, LayoutType } from '../../core/models/api-models';
 
 @Component({
   selector: 'app-buses',
@@ -69,6 +70,10 @@ import { BusDto, SeatClassLabel, SeatDto, SeatLayoutDto } from '../../core/model
           <ng-container matColumnDef="seats">
             <th mat-header-cell *matHeaderCellDef>Layout</th>
             <td mat-cell *matCellDef="let b">{{ b.totalSeats }} seats ({{ b.seatLayoutRows }}×{{ b.seatLayoutColumns }})</td>
+          </ng-container>
+          <ng-container matColumnDef="layout">
+            <th mat-header-cell *matHeaderCellDef>Type</th>
+            <td mat-cell *matCellDef="let b">{{ b.seatLayoutType === 1 ? 'Real Bus' : 'Standard Grid' }}</td>
           </ng-container>
           <ng-container matColumnDef="status">
             <th mat-header-cell *matHeaderCellDef>Active</th>
@@ -126,7 +131,7 @@ export class BusesComponent implements OnInit {
   protected readonly totalCount = signal(0);
   protected readonly pageIndex = signal(0);
   protected readonly pageSize = signal(20);
-  protected readonly columns = ['number', 'registration', 'operator', 'seats', 'status', 'actions'];
+  protected readonly columns = ['number', 'registration', 'operator', 'seats', 'layout', 'status', 'actions'];
 
   ngOnInit(): void {
     this.load();
@@ -186,7 +191,7 @@ export class BusesComponent implements OnInit {
 @Component({
   selector: 'app-bus-form-dialog',
   standalone: true,
-  imports: [ReactiveFormsModule, MatDialogModule, MatFormFieldModule, MatInputModule, MatButtonModule],
+  imports: [ReactiveFormsModule, MatDialogModule, MatFormFieldModule, MatInputModule, MatButtonModule, MatSelectModule, MatCheckboxModule],
   template: `
     <h2 mat-dialog-title>{{ data ? 'Edit Bus' : 'Add Bus' }}</h2>
     <form [formGroup]="form" (ngSubmit)="save()">
@@ -208,14 +213,46 @@ export class BusesComponent implements OnInit {
           <div class="grid-2">
             <mat-form-field appearance="outline">
               <mat-label>Rows</mat-label>
-              <input matInput type="number" formControlName="rows" />
+              <input matInput type="number" formControlName="rows" (change)="onRowsChange()" />
             </mat-form-field>
             <mat-form-field appearance="outline">
               <mat-label>Columns</mat-label>
               <input matInput type="number" formControlName="columns" />
             </mat-form-field>
           </div>
-          <p class="hint mono">Layout will generate {{ seatCount() }} seats (A1..{{ lastSeatLabel() }}).</p>
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Layout Type</mat-label>
+            <mat-select formControlName="layoutType">
+              <mat-option [value]="0">Standard Grid</mat-option>
+              <mat-option [value]="1">Real Bus</mat-option>
+            </mat-select>
+          </mat-form-field>
+          @if (form.controls.layoutType.value === 1) {
+            <div class="real-bus-config">
+              <mat-checkbox formControlName="driverSeat" class="full-width">Driver Seat</mat-checkbox>
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Aisle Gap</mat-label>
+                <input matInput type="number" formControlName="aisleGap" min="0" max="3" />
+              </mat-form-field>
+              <p class="hint mono">Seats per row (Left | Right)</p>
+              <div class="row-configs">
+                @for (row of rowConfigs(); track row.label) {
+                  <div class="row-config">
+                    <span class="row-label">Row {{ row.label }}</span>
+                    <input type="number" [value]="row.left" (input)="updateRowConfig($index, 'left', $any($event.target).value)" min="0" max="4" />
+                    <span class="row-sep">|</span>
+                    <input type="number" [value]="row.right" (input)="updateRowConfig($index, 'right', $any($event.target).value)" min="0" max="4" />
+                  </div>
+                }
+              </div>
+            </div>
+          }
+          @if (form.controls['layoutType'].value !== 1) {
+            <p class="hint mono">Layout will generate {{ seatCount() }} seats (A1..{{ lastSeatLabel() }}).</p>
+          }
+          @if (form.controls['layoutType'].value === 1) {
+            <p class="hint mono">Layout will generate {{ realBusSeatCount() }} seats with real bus arrangement.</p>
+          }
         }
       </mat-dialog-content>
       <mat-dialog-actions align="end">
@@ -229,6 +266,12 @@ export class BusesComponent implements OnInit {
       .full-width { width: 100%; }
       .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
       .hint { color: var(--color-text-muted); font-size: 0.8rem; margin-top: -8px; }
+      .real-bus-config { margin-top: 12px; padding: 12px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); }
+      .row-configs { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+      .row-config { display: flex; align-items: center; gap: 8px; }
+      .row-label { width: 50px; font-size: 0.85rem; color: var(--color-text-muted); }
+      .row-config input { width: 50px; text-align: center; }
+      .row-sep { color: var(--color-text-muted); }
     `,
   ],
 })
@@ -245,7 +288,41 @@ export class BusFormDialogComponent {
     registrationNumber: ['', this.data ? [] : Validators.required],
     rows: [6, [Validators.required, Validators.min(1), Validators.max(26)]],
     columns: [4, [Validators.required, Validators.min(1), Validators.max(10)]],
+    layoutType: [this.data?.seatLayoutType ?? 0, Validators.required],
+    driverSeat: [true],
+    aisleGap: [1, [Validators.required, Validators.min(0), Validators.max(3)]],
   });
+
+  protected readonly rowConfigs = signal<{ label: string; left: number; right: number }[]>([]);
+
+  constructor() {
+    this.initRowConfigs();
+  }
+
+  initRowConfigs(): void {
+    const rows = this.form.controls.rows.value || 6;
+    const config = this.data?.seatLayoutConfig ? JSON.parse(this.data.seatLayoutConfig) : null;
+    const rowSeats = config?.SeatsPerRow ?? [];
+    this.rowConfigs.set(
+      Array.from({ length: rows }, (_, i) => {
+        const label = String.fromCharCode('A'.charCodeAt(0) + i);
+        const rs = rowSeats[i];
+        return { label, left: rs?.Left ?? 2, right: rs?.Right ?? 2 };
+      })
+    );
+  }
+
+  onRowsChange(): void {
+    this.initRowConfigs();
+  }
+
+  updateRowConfig(index: number, field: 'left' | 'right', value: string): void {
+    const num = Math.max(0, Math.min(4, parseInt(value) || 0));
+    const current = this.rowConfigs();
+    const updated = [...current];
+    updated[index] = { ...updated[index], [field]: num };
+    this.rowConfigs.set(updated);
+  }
 
   seatCount(): number {
     return (this.form.controls.rows.value || 0) * (this.form.controls.columns.value || 0);
@@ -258,10 +335,33 @@ export class BusFormDialogComponent {
     return `${rowLetter}${cols}`;
   }
 
+  realBusSeatCount(): number {
+    const rows = this.form.controls.rows.value || 0;
+    const config = this.form.getRawValue();
+    let count = 0;
+    const rowConfigs = this.rowConfigs();
+    for (let i = 0; i < rows; i++) {
+      const rs = rowConfigs[i] || { left: 2, right: 2 };
+      count += rs.left + rs.right + (i === 0 && config.driverSeat ? 1 : 0);
+    }
+    return count;
+  }
+
+  buildLayoutConfigJson(): string | null {
+    if (this.form.controls.layoutType.value !== 1) return null;
+    const config = {
+      DriverSeat: this.form.controls.driverSeat.value,
+      AisleGap: this.form.controls.aisleGap.value,
+      SeatsPerRow: this.rowConfigs().map(r => ({ Left: r.left, Right: r.right })),
+    };
+    return JSON.stringify(config);
+  }
+
   save(): void {
     if (this.form.invalid) return;
     this.saving.set(true);
     const value = this.form.getRawValue();
+    const layoutConfigJson = this.buildLayoutConfigJson();
 
     const request$ = this.data
       ? this.busesService.update(this.data.id, { number: value.number, operatorName: value.operatorName })
@@ -272,6 +372,8 @@ export class BusFormDialogComponent {
           rows: value.rows,
           columns: value.columns,
           defaultSeatClass: 0,
+          layoutType: value.layoutType,
+          layoutConfigJson,
         });
 
     request$.subscribe({
@@ -292,28 +394,50 @@ export class BusFormDialogComponent {
         <div class="legend">
           <span class="board-chip board-chip--available">Active</span>
           <span class="board-chip board-chip--muted">Out of Service</span>
-        </div>
-
-        <div class="seat-grid" [style.gridTemplateColumns]="gridColumns(l.columns)">
-          @for (row of rowLabels(l); track row) {
-            @for (col of columnNumbers(l.columns); track col) {
-              @if (seatAt(l, row, col); as seat) {
-                <button
-                  type="button"
-                  class="seat"
-                  [class.seat--inactive]="!seat.isActive"
-                  [matTooltip]="seatClassLabel(seat)"
-                  (click)="toggleSeat(seat)"
-                >
-                  {{ seat.seatNumber }}
-                </button>
-              }
-              @if (isAisle(l.columns, col)) {
-                <div class="aisle"></div>
-              }
-            }
+          @if (l.layoutType === 1) {
+            <span class="board-chip driver-chip">Driver</span>
           }
         </div>
+
+        @if (l.layoutType === 1) {
+          <div class="real-bus-seat-grid" [style.gridTemplateColumns]="realBusGridColumns(l)">
+            @for (seat of l.seats; track seat.id) {
+              <button
+                type="button"
+                class="seat"
+                [class.seat--inactive]="!seat.isActive"
+                [class.seat--driver]="seat.isDriver"
+                [matTooltip]="seatClassLabel(seat)"
+                (click)="toggleSeat(seat)"
+                [style.grid-row]="seat.visualRow"
+                [style.grid-column]="seat.visualCol"
+              >
+                {{ seat.isDriver ? 'Driver' : seat.seatNumber }}
+              </button>
+            }
+          </div>
+        } @else {
+          <div class="seat-grid" [style.gridTemplateColumns]="gridColumns(l.columns)">
+            @for (row of rowLabels(l); track row) {
+              @for (col of columnNumbers(l.columns); track col) {
+                @if (seatAt(l, row, col); as seat) {
+                  <button
+                    type="button"
+                    class="seat"
+                    [class.seat--inactive]="!seat.isActive"
+                    [matTooltip]="seatClassLabel(seat)"
+                    (click)="toggleSeat(seat)"
+                  >
+                    {{ seat.seatNumber }}
+                  </button>
+                }
+                @if (isAisle(l.columns, col)) {
+                  <div class="aisle"></div>
+                }
+              }
+            }
+          </div>
+        }
       }
     </mat-dialog-content>
     <mat-dialog-actions align="end">
@@ -328,6 +452,11 @@ export class BusFormDialogComponent {
         margin-bottom: 16px;
       }
       .seat-grid {
+        display: grid;
+        gap: 8px;
+        justify-content: center;
+      }
+      .real-bus-seat-grid {
         display: grid;
         gap: 8px;
         justify-content: center;
@@ -348,6 +477,17 @@ export class BusFormDialogComponent {
         border-color: var(--color-outofservice);
         background: var(--color-outofservice-bg);
         color: var(--color-outofservice);
+      }
+      .seat--driver {
+        border-color: #ff9800;
+        background: #fff3e0;
+        color: #e65100;
+        cursor: default;
+      }
+      .driver-chip {
+        background: #fff3e0;
+        color: #e65100;
+        border-color: #ff9800;
       }
       .aisle {
         width: 20px;
@@ -389,6 +529,12 @@ export class SeatMapDialogComponent implements OnInit {
 
   seatClassLabel(seat: SeatDto): string {
     return `${SeatClassLabel[seat.class]} · ${seat.isActive ? 'In service' : 'Out of service'}`;
+  }
+
+  realBusGridColumns(layout: SeatLayoutDto): string {
+    if (layout.layoutType !== 1 || !layout.seats.length) return 'repeat(5, 44px)';
+    const maxCol = Math.max(...layout.seats.map(s => s.visualCol ?? 1));
+    return `repeat(${maxCol}, 44px)`;
   }
 
   toggleSeat(seat: SeatDto): void {

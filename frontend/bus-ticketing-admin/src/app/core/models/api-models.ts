@@ -74,6 +74,8 @@ export interface BusDto {
   isActive: boolean;
   seatLayoutRows: number;
   seatLayoutColumns: number;
+  seatLayoutType: number;
+  seatLayoutConfig: string | null;
 }
 
 export type SeatClass = 0 | 1 | 2; // Economy | Business | Sleeper
@@ -83,6 +85,12 @@ export const SeatClassLabel: Record<SeatClass, string> = {
   2: 'Sleeper',
 };
 
+export type LayoutType = 0 | 1; // StandardGrid | RealBus
+export const LayoutTypeLabel: Record<LayoutType, string> = {
+  0: 'Standard Grid',
+  1: 'Real Bus',
+};
+
 export interface SeatDto {
   id: string;
   seatNumber: string;
@@ -90,6 +98,9 @@ export interface SeatDto {
   columnNumber: number;
   class: SeatClass;
   isActive: boolean;
+  isDriver?: boolean;
+  visualRow?: number;
+  visualCol?: number;
 }
 
 export interface SeatLayoutDto {
@@ -98,6 +109,8 @@ export interface SeatLayoutDto {
   busNumber: string;
   rows: number;
   columns: number;
+  layoutType: number;
+  layoutConfigJson: string | null;
   seats: SeatDto[];
 }
 
