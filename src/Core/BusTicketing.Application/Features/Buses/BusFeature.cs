@@ -57,9 +57,10 @@ public class CreateBusCommandHandler : IRequestHandler<CreateBusCommand, Result<
         if (duplicate)
             return Result.Failure<BusDto>(Error.Conflict($"A bus with registration \"{request.RegistrationNumber}\" already exists."));
 
-        var totalSeats = request.Rows * request.Columns;
-        var bus = Bus.Create(request.Number, request.RegistrationNumber, request.OperatorName, totalSeats);
+        var bus = Bus.Create(request.Number, request.RegistrationNumber, request.OperatorName, request.Rows * request.Columns);
         var layout = SeatLayout.Generate(bus.Id, request.Rows, request.Columns, request.DefaultSeatClass, request.LayoutType, request.LayoutConfigJson);
+        if (layout.Seats.Count != bus.TotalSeats)
+            bus.SetTotalSeats(layout.Seats.Count);
         bus.AssignSeatLayout(layout);
 
         await using var transaction = await _db.BeginTransactionAsync(cancellationToken);

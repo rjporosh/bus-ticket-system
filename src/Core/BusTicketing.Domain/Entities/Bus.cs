@@ -60,4 +60,5 @@ public class Bus : BaseEntity
 
     public void Deactivate() => IsActive = false;
     public void Activate() => IsActive = true;
+    public void SetTotalSeats(int totalSeats) => TotalSeats = totalSeats;
 }
