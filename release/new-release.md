@@ -1,12 +1,17 @@
 # Release Notes
 
-## Version: 1.0.1
+## Version: 1.0.2
 **Release Date:** 09-08-2026
-**Phase:** Phase 4 — Client Booking Hardening
+**Phase:** Phase 4 — CORS Hardening & Admin Seat Map UX
 
 ---
 
 ## Features Built
+
+### Milestone 6 — CORS Hardening & Admin Seat Map UX
+- **Backend:** CORS policy now reads `AllowedOrigins` from `appsettings.json` (`Cors:AllowedOrigins`) and applies them via `WithOrigins()`, replacing the previous blanket `AllowAnyOrigin()` wildcard. The `docker-compose.yml` `Cors__AllowedOrigins__0` environment variable is now actually consumed.
+- **Admin:** Seat map dialog reimagined as a bus-body visualization with FRONT/REAR indicators, aligned row labels (A/B/C/D), and a driver-seat icon. Both Standard Grid and Real Bus layouts render inside a unified bus-shaped container.
+- **Admin:** RealBus per-row left/right configuration supports arbitrary last-row layouts (e.g., 2+2 with a 5-seat rear row) for accurate real-world bus shapes.
 
 ### Milestone 5 — RealBus Layout Completion & Per-Seat Passenger Details
 - **Backend:** `GetAvailableSeatsQueryHandler` now computes accurate `visualRow`/`visualCol` for both `StandardGrid` and `RealBus` layouts
@@ -86,6 +91,9 @@
 
 | Bug | Resolution |
 |-----|-----------|
+| CORS policy was overly permissive | `Program.cs` now reads `Cors:AllowedOrigins` from `appsettings.json` and uses `WithOrigins()` instead of `AllowAnyOrigin()` |
+| Admin seat map lacked bus-body context | Seat map dialog now renders inside a bus-shaped container with FRONT/REAR indicators and aligned row labels |
+| RealBus last-row configuration unclear | Per-row left/right seat counts allow arbitrary row layouts (e.g., 2+2 with a 5-seat rear row) |
 | Client booking had no visual seat grid | Added real-bus seat layout rendering with driver seat and aisle gaps |
 | Seat layout was uniform grid only | Added `LayoutType` and `LayoutConfigJson` for configurable real-bus shapes |
 | No per-seat passenger details in client booking | Replaced single passenger form with `FormArray` + "Same for all seats" toggle |
@@ -130,6 +138,9 @@ No migration needed. New seat grid uses existing `SeatAvailabilityDto` fields pl
 
 ## SQA Checklist
 
+- [ ] CORS allows only configured origins from `appsettings.json`
+- [ ] Admin seat map dialog shows FRONT/REAR labels and aligned row letters
+- [ ] RealBus last row can be configured with all seats together (no aisle)
 - [ ] `GET /api/v1/release/current` returns 200 with version, features, and bugs
 - [ ] `GET /api/v1/release/notes` returns markdown
 - [ ] Admin can create a bus with `LayoutType = RealBus` and custom `LayoutConfigJson`

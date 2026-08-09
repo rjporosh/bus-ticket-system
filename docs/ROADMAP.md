@@ -79,6 +79,9 @@ full implementation.
 
 Database artifacts, release tracking, configurable real-bus seat layout, Postman collection, and enterprise-grade developer documentation. See `release/new-release.md` for the line-by-line feature checklist and `git log` for the exact commits.
 
+### Security hardening
+- CORS policy now reads `AllowedOrigins` from `appsettings.json` (`Cors:AllowedOrigins`) and applies them via `WithOrigins()`, replacing the previous blanket `AllowAnyOrigin()` wildcard
+
 ### Database artifacts
 - Versioned SQL in `database/` (schema, stored procedures, functions, views, triggers, seed data)
 - Monthly versioning under `database/2026/august/`
@@ -92,8 +95,9 @@ Database artifacts, release tracking, configurable real-bus seat layout, Postman
 ### Configurable real-bus seat layout
 - Backend: `SeatLayout.LayoutType` (`StandardGrid` | `RealBus`) + `LayoutConfigJson`
 - Admin: bus creation form exposes layout type, driver seat toggle, aisle gap, and per-row left/right seat counts
+- Admin: seat map dialog renders RealBus layouts inside a bus-shaped container with FRONT/REAR indicators, aligned row labels, and driver seat icon
 - Frontend client: real-bus-shaped seat grid with driver seat, aisle gap, and configurable left/right groups
-- Backend `GetAvailableSeatsQueryHandler` computes proper `visualRow`/`visualCol` coordinates for accurate 2D rendering
+- Backend `GetAvailableSeatsQueryHandler` computes proper `visualRow`/ `visualCol` coordinates for accurate 2D rendering
 - Existing data defaults to `StandardGrid` — no breaking change
 
 ### Per-seat passenger details

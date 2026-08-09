@@ -400,42 +400,76 @@ export class BusFormDialogComponent {
         </div>
 
         @if (l.layoutType === 1) {
-          <div class="real-bus-seat-grid" [style.gridTemplateColumns]="realBusGridColumns(l)">
-            @for (seat of l.seats; track seat.id) {
-              <button
-                type="button"
-                class="seat"
-                [class.seat--inactive]="!seat.isActive"
-                [class.seat--driver]="seat.isDriver"
-                [matTooltip]="seatClassLabel(seat)"
-                (click)="toggleSeat(seat)"
-                [style.grid-row]="seat.visualRow"
-                [style.grid-column]="seat.visualCol"
-              >
-                {{ seat.isDriver ? 'Driver' : seat.seatNumber }}
-              </button>
-            }
-          </div>
-        } @else {
-          <div class="seat-grid" [style.gridTemplateColumns]="gridColumns(l.columns)">
-            @for (row of rowLabels(l); track row) {
-              @for (col of columnNumbers(l.columns); track col) {
-                @if (seatAt(l, row, col); as seat) {
+          <div class="bus-body">
+            <div class="bus-front">
+              <span class="bus-front-label">FRONT</span>
+            </div>
+            <div class="bus-interior">
+              <div class="row-labels-grid" [style.gridTemplateRows]="realBusGridRows(l)">
+                @for (item of getRealBusRowLabels(l); track item.visualRow) {
+                  <div class="row-label" [style.gridRow]="item.visualRow">{{ item.label }}</div>
+                }
+              </div>
+              <div class="real-bus-seat-grid" [style.gridTemplateColumns]="realBusGridColumns(l)" [style.gridTemplateRows]="realBusGridRows(l)">
+                @for (seat of l.seats; track seat.id) {
                   <button
                     type="button"
                     class="seat"
                     [class.seat--inactive]="!seat.isActive"
+                    [class.seat--driver]="seat.isDriver"
                     [matTooltip]="seatClassLabel(seat)"
                     (click)="toggleSeat(seat)"
+                    [style.grid-row]="seat.visualRow"
+                    [style.grid-column]="seat.visualCol"
                   >
-                    {{ seat.seatNumber }}
+                    @if (seat.isDriver) {
+                      <span class="driver-icon">&#x1F69A;</span>
+                    } @else {
+                      {{ seat.seatNumber }}
+                    }
                   </button>
                 }
-                @if (isAisle(l.columns, col)) {
-                  <div class="aisle"></div>
+              </div>
+            </div>
+            <div class="bus-rear">
+              <span class="bus-rear-label">REAR</span>
+            </div>
+          </div>
+        } @else {
+          <div class="bus-body">
+            <div class="bus-front">
+              <span class="bus-front-label">FRONT</span>
+            </div>
+            <div class="bus-interior standard-grid-interior">
+              <div class="row-labels-grid" [style.gridTemplateRows]="gridRows(l.rows)">
+                @for (row of rowLabels(l); track row) {
+                  <div class="row-label">{{ row }}</div>
                 }
-              }
-            }
+              </div>
+              <div class="seat-grid" [style.gridTemplateColumns]="gridColumns(l.columns)" [style.gridTemplateRows]="gridRows(l.rows)">
+                @for (row of rowLabels(l); track row) {
+                  @for (col of columnNumbers(l.columns); track col) {
+                    @if (seatAt(l, row, col); as seat) {
+                      <button
+                        type="button"
+                        class="seat"
+                        [class.seat--inactive]="!seat.isActive"
+                        [matTooltip]="seatClassLabel(seat)"
+                        (click)="toggleSeat(seat)"
+                      >
+                        {{ seat.seatNumber }}
+                      </button>
+                    }
+                    @if (isAisle(l.columns, col)) {
+                      <div class="aisle-gap"></div>
+                    }
+                  }
+                }
+              </div>
+            </div>
+            <div class="bus-rear">
+              <span class="bus-rear-label">REAR</span>
+            </div>
           </div>
         }
       }
@@ -451,6 +485,64 @@ export class BusFormDialogComponent {
         gap: 8px;
         margin-bottom: 16px;
       }
+      .bus-body {
+        background: #f8f9fa;
+        border: 2px solid #dee2e6;
+        border-radius: 12px;
+        padding: 16px;
+        display: inline-flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+      }
+      .bus-front {
+        width: 100%;
+        text-align: center;
+        padding-bottom: 8px;
+        border-bottom: 2px dashed #ced4da;
+      }
+      .bus-front-label {
+        font-size: 0.7rem;
+        font-weight: 700;
+        color: #6c757d;
+        letter-spacing: 0.15em;
+      }
+      .bus-rear {
+        width: 100%;
+        text-align: center;
+        padding-top: 8px;
+        border-top: 2px dashed #ced4da;
+      }
+      .bus-rear-label {
+        font-size: 0.7rem;
+        font-weight: 700;
+        color: #6c757d;
+        letter-spacing: 0.15em;
+      }
+      .bus-interior {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 8px 0;
+      }
+      .standard-grid-interior {
+        flex-direction: column;
+      }
+      .row-labels-grid {
+        display: grid;
+        gap: 8px;
+      }
+      .row-label {
+        width: 28px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #495057;
+      }
       .seat-grid {
         display: grid;
         gap: 8px;
@@ -458,12 +550,12 @@ export class BusFormDialogComponent {
       }
       .real-bus-seat-grid {
         display: grid;
-        gap: 8px;
+        gap: 6px;
         justify-content: center;
       }
       .seat {
         font-family: var(--font-mono);
-        font-size: 0.75rem;
+        font-size: 0.7rem;
         font-weight: 600;
         width: 44px;
         height: 40px;
@@ -472,6 +564,13 @@ export class BusFormDialogComponent {
         background: var(--color-available-bg);
         color: var(--color-available);
         cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .seat:hover:not(.seat--inactive):not(.seat--driver) {
+        transform: scale(1.05);
+        box-shadow: 0 2px 6px rgba(0,0,0,0.1);
       }
       .seat--inactive {
         border-color: var(--color-outofservice);
@@ -484,12 +583,16 @@ export class BusFormDialogComponent {
         color: #e65100;
         cursor: default;
       }
+      .driver-icon {
+        font-size: 1.1rem;
+        line-height: 1;
+      }
       .driver-chip {
         background: #fff3e0;
         color: #e65100;
         border-color: #ff9800;
       }
-      .aisle {
+      .aisle-gap {
         width: 20px;
       }
     `,
@@ -510,6 +613,16 @@ export class SeatMapDialogComponent implements OnInit {
     return [...new Set(layout.seats.map((s) => s.rowLabel))].sort();
   }
 
+  getRealBusRowLabels(layout: SeatLayoutDto): { visualRow: number; label: string }[] {
+    const map = new Map<number, string>();
+    layout.seats.forEach((s) => {
+      if (!s.isDriver && s.visualRow != null && !map.has(s.visualRow)) {
+        map.set(s.visualRow, s.rowLabel);
+      }
+    });
+    return [...map.entries()].sort((a, b) => a[0] - b[0]).map(([visualRow, label]) => ({ visualRow, label }));
+  }
+
   columnNumbers(columns: number): number[] {
     return Array.from({ length: columns }, (_, i) => i + 1);
   }
@@ -527,6 +640,10 @@ export class SeatMapDialogComponent implements OnInit {
     return `repeat(${columns}, 44px)`;
   }
 
+  gridRows(rows: number): string {
+    return `repeat(${rows}, 40px)`;
+  }
+
   seatClassLabel(seat: SeatDto): string {
     return `${SeatClassLabel[seat.class]} · ${seat.isActive ? 'In service' : 'Out of service'}`;
   }
@@ -535,6 +652,12 @@ export class SeatMapDialogComponent implements OnInit {
     if (layout.layoutType !== 1 || !layout.seats.length) return 'repeat(5, 44px)';
     const maxCol = Math.max(...layout.seats.map(s => s.visualCol ?? 1));
     return `repeat(${maxCol}, 44px)`;
+  }
+
+  realBusGridRows(layout: SeatLayoutDto): string {
+    if (layout.layoutType !== 1 || !layout.seats.length) return 'repeat(1, 40px)';
+    const maxRow = Math.max(...layout.seats.map(s => s.visualRow ?? 1));
+    return `repeat(${maxRow}, 40px)`;
   }
 
   toggleSeat(seat: SeatDto): void {
