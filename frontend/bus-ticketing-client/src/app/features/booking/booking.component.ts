@@ -1,7 +1,7 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, FormArray, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
@@ -9,6 +9,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { ApiService } from '../../core/services/api.service';
 import { TripsService } from '../../core/services/trips.service';
 import { BookingService } from '../../core/services/booking.service';
@@ -77,28 +78,51 @@ import {
         <div class="booking-form">
           <h3>Passenger Details</h3>
           <form [formGroup]="bookingForm" (ngSubmit)="onSubmit()">
-            <mat-form-field appearance="outline" class="full-width">
-              <mat-label>Full Name</mat-label>
-              <input matInput formControlName="passengerName" placeholder="As per ID">
-              <mat-error *ngIf="bookingForm.get('passengerName')?.hasError('required')">Name is required</mat-error>
-            </mat-form-field>
-            <mat-form-field appearance="outline" class="full-width">
-              <mat-label>Mobile Number</mat-label>
-              <input matInput formControlName="passengerMobile" placeholder="01XXXXXXXXX">
-              <mat-error *ngIf="bookingForm.get('passengerMobile')?.hasError('required')">Mobile is required</mat-error>
-            </mat-form-field>
-            <mat-form-field appearance="outline" class="full-width">
-              <mat-label>Gender (optional)</mat-label>
-              <mat-select formControlName="gender">
-                <mat-option value="Male">Male</mat-option>
-                <mat-option value="Female">Female</mat-option>
-                <mat-option value="Other">Other</mat-option>
-              </mat-select>
-            </mat-form-field>
-            <mat-form-field appearance="outline" class="full-width">
-              <mat-label>NID / Passport (optional)</mat-label>
-              <input matInput formControlName="nidOrPassport">
-            </mat-form-field>
+            <div formArrayName="passengers">
+              @for (passenger of passengers.controls; track $index; let i = $index) {
+                <div [formGroupName]="i" class="passenger-card">
+                  <h4>
+                    @if (i === 0) {
+                      Passenger 1
+                    } @else {
+                      Passenger {{ i + 1 }} · Seat {{ selectedSeats()[i].seatNumber }}
+                    }
+                  </h4>
+                  <div class="grid-2">
+                    <mat-form-field appearance="outline" class="full-width">
+                      <mat-label>Full Name *</mat-label>
+                      <input matInput formControlName="name" placeholder="As per ID">
+                      <mat-error *ngIf="passenger.get('name')?.hasError('required')">Name is required</mat-error>
+                    </mat-form-field>
+                    <mat-form-field appearance="outline" class="full-width">
+                      <mat-label>Mobile Number *</mat-label>
+                      <input matInput formControlName="mobile" placeholder="01XXXXXXXXX" maxlength="11">
+                      <mat-error *ngIf="passenger.get('mobile')?.hasError('required')">Mobile is required</mat-error>
+                      <mat-error *ngIf="passenger.get('mobile')?.hasError('pattern')">Numbers only, max 11 digits</mat-error>
+                    </mat-form-field>
+                    <mat-form-field appearance="outline" class="full-width">
+                      <mat-label>Gender</mat-label>
+                      <mat-select formControlName="gender">
+                        <mat-option value="Male">Male</mat-option>
+                        <mat-option value="Female">Female</mat-option>
+                        <mat-option value="Other">Other</mat-option>
+                      </mat-select>
+                    </mat-form-field>
+                    <mat-form-field appearance="outline" class="full-width">
+                      <mat-label>NID / Passport</mat-label>
+                      <input matInput formControlName="nid">
+                    </mat-form-field>
+                  </div>
+                </div>
+              }
+            </div>
+
+            @if (selectedSeats().length > 1) {
+              <mat-checkbox formControlName="sameForAll" (change)="onSameForAllChange()" class="same-for-all">
+                Same passenger for all seats
+              </mat-checkbox>
+            }
+
             <mat-form-field appearance="outline" class="full-width">
               <mat-label>Payment Method</mat-label>
               <mat-select formControlName="paymentMethod">
@@ -122,20 +146,31 @@ import {
 
       <div class="seat-map-section" *ngIf="seats().length > 0">
         <h3>Select Seats</h3>
-        <div class="bus-layout" [class.real-bus]="hasRealBusLayout()">
-          <div class="seat-grid">
-            <div *ngFor="let seat of seats()"
-                 class="seat-cell"
-                 [class.driver-seat]="seat.isDriver"
-                 [class.sold]="seat.isSold"
-                 [class.out-of-service]="!seat.isInService"
-                 [class.selected]="isSelected(seat)"
-                 [style.grid-row]="getVisualRow(seat)"
-                 [style.grid-column]="getVisualCol(seat)"
-                 (click)="toggleSeat(seat)">
-              <span class="seat-label" *ngIf="!seat.isDriver">{{ seat.seatNumber }}</span>
-              <span class="driver-icon" *ngIf="seat.isDriver">&#x1F69A;</span>
-            </div>
+        <div class="bus-layout">
+          <div class="seat-grid" [style.gridTemplateColumns]="getGridTemplateColumns()">
+            @for (seat of seats(); track seat.seatId) {
+              <div class="seat-cell"
+                   [class.driver-seat]="seat.isDriver"
+                   [class.sold]="seat.isSold"
+                   [class.out-of-service]="!seat.isInService"
+                   [class.selected]="isSelected(seat)"
+                   [class.male]="seat.isSold && seat.passengerGender === 'Male'"
+                   [class.female]="seat.isSold && seat.passengerGender === 'Female'"
+                   [style.grid-row]="getVisualRow(seat)"
+                   [style.grid-column]="getVisualCol(seat)"
+                   (click)="toggleSeat(seat)">
+                @if (seat.isDriver) {
+                  <span class="driver-icon">&#x1F69A;</span>
+                } @else if (seat.isSold && seat.passengerName) {
+                  <span class="passenger-info">
+                    <span class="passenger-initials">{{ getInitials(seat.passengerName) }}</span>
+                    <span class="gender-icon">{{ seat.passengerGender === 'Male' ? '&#x2642;' : seat.passengerGender === 'Female' ? '&#x2640;' : '' }}</span>
+                  </span>
+                } @else {
+                  <span class="seat-label">{{ seat.seatNumber }}</span>
+                }
+              </div>
+            }
           </div>
           <div class="seat-legend">
             <span class="legend-item"><span class="legend-box available"></span> Available</span>
@@ -143,6 +178,8 @@ import {
             <span class="legend-item"><span class="legend-box sold"></span> Sold</span>
             <span class="legend-item"><span class="legend-box out-of-service"></span> Out of service</span>
             <span class="legend-item"><span class="legend-box driver"></span> Driver</span>
+            <span class="legend-item"><span class="legend-box male"></span> Male</span>
+            <span class="legend-item"><span class="legend-box female"></span> Female</span>
           </div>
         </div>
       </div>
@@ -175,21 +212,39 @@ import {
     .error-state { text-align: center; padding: 4rem 2rem; }
     .error-state p { color: #666; margin-bottom: 1.5rem; }
 
+    .passenger-card { margin-bottom: 1rem; padding: 1rem; border: 1px solid #e0e0e0; border-radius: 8px; background: #fafafa; }
+    .passenger-card h4 { margin: 0 0 0.75rem; color: #333; font-size: 0.95rem; }
+    .same-for-all { margin: 0.5rem 0 1rem; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+
     .seat-map-section { margin-top: 2rem; }
     .seat-map-section h3 { color: #333; margin-bottom: 1rem; }
     .bus-layout { background: #f5f5f5; padding: 1.5rem; border-radius: 8px; display: inline-block; }
-    .seat-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 0.5rem; }
+
+    .seat-grid {
+      display: grid;
+      gap: 0.5rem;
+      justify-content: center;
+      margin-bottom: 1rem;
+    }
     .seat-cell {
-      width: 40px; height: 40px; border-radius: 6px; display: flex; align-items: center; justify-content: center;
-      font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: all 0.2s;
+      width: 44px; height: 44px; border-radius: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      font-size: 0.7rem; font-weight: 600; cursor: pointer; transition: all 0.2s;
       background: #fff; border: 2px solid #e0e0e0; color: #333;
     }
-    .seat-cell:hover:not(.sold):not(.out-of-service) { border-color: #1a73e8; transform: scale(1.05); }
+    .seat-cell:hover:not(.sold):not(.out-of-service):not(.driver-seat) { border-color: #1a73e8; transform: scale(1.05); }
     .seat-cell.selected { background: #1a73e8; color: #fff; border-color: #1a73e8; }
     .seat-cell.sold { background: #ffebee; color: #c62828; border-color: #ffcdd2; cursor: not-allowed; }
+    .seat-cell.sold.male { background: #e3f2fd; border-color: #90caf9; color: #1565c0; }
+    .seat-cell.sold.female { background: #fce4ec; border-color: #f48fb1; color: #c2185b; }
     .seat-cell.out-of-service { background: #f5f5f5; color: #9e9e9e; border-color: #e0e0e0; cursor: not-allowed; text-decoration: line-through; }
-    .seat-cell.driver-seat { background: #fff3e0; border-color: #ff9800; cursor: default; }
+    .seat-cell.driver-seat { background: #fff3e0; border-color: #ff9800; color: #e65100; cursor: default; }
     .driver-icon { font-size: 1.2rem; }
+    .passenger-info { display: flex; flex-direction: column; align-items: center; line-height: 1.1; }
+    .passenger-initials { font-size: 0.6rem; font-weight: 700; }
+    .gender-icon { font-size: 0.55rem; }
+    .seat-label { font-size: 0.75rem; }
+
     .seat-legend { margin-top: 1rem; display: flex; gap: 1.5rem; flex-wrap: wrap; }
     .legend-item { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: #666; }
     .legend-box { width: 16px; height: 16px; border-radius: 4px; border: 2px solid #e0e0e0; }
@@ -198,6 +253,8 @@ import {
     .legend-box.sold { background: #ffebee; border-color: #ffcdd2; }
     .legend-box.out-of-service { background: #f5f5f5; }
     .legend-box.driver { background: #fff3e0; border-color: #ff9800; }
+    .legend-box.male { background: #e3f2fd; border-color: #90caf9; }
+    .legend-box.female { background: #fce4ec; border-color: #f48fb1; }
 
     @media (max-width: 768px) {
       .booking-layout { grid-template-columns: 1fr; }
@@ -227,13 +284,26 @@ export class BookingComponent implements OnInit {
     private snackBar: MatSnackBar
   ) {
     this.bookingForm = this.fb.nonNullable.group({
-      passengerName: ['', Validators.required],
-      passengerMobile: ['', Validators.required],
-      gender: [''],
-      nidOrPassport: [''],
+      sameForAll: [true],
+      passengers: this.fb.array([
+        this.fb.nonNullable.group({
+          name: ['', Validators.required],
+          mobile: ['', [Validators.required, Validators.pattern('^[0-9]{0,11}$'), Validators.maxLength(11)]],
+          gender: [''],
+          nid: [''],
+        })
+      ]),
       paymentMethod: [0, Validators.required],
       remarks: [''],
     });
+  }
+
+  get passengers(): FormArray {
+    return this.bookingForm.controls['passengers'] as FormArray;
+  }
+
+  get sameForAll(): boolean {
+    return this.bookingForm.controls['sameForAll'].value;
   }
 
   ngOnInit(): void {
@@ -300,14 +370,18 @@ export class BookingComponent implements OnInit {
       current.push(seat);
     }
     this.selectedSeats.set([...current]);
+    this.syncPassengers();
   }
 
   isSelected(seat: SeatAvailabilityDto): boolean {
     return this.selectedSeats().some(s => s.seatId === seat.seatId);
   }
 
-  hasRealBusLayout(): boolean {
-    return this.seats().some(s => s.isDriver || s.visualRow !== undefined || s.visualCol !== undefined);
+  getGridTemplateColumns(): string {
+    const seats = this.seats();
+    if (!seats.length) return 'repeat(12, 1fr)';
+    const maxCol = Math.max(...seats.map(s => s.visualCol ?? 1));
+    return `repeat(${maxCol}, 44px)`;
   }
 
   getVisualRow(seat: SeatAvailabilityDto): number {
@@ -316,6 +390,33 @@ export class BookingComponent implements OnInit {
 
   getVisualCol(seat: SeatAvailabilityDto): number {
     return seat.visualCol ?? 0;
+  }
+
+  getInitials(name: string): string {
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  }
+
+  createPassengerGroup(): FormGroup {
+    return this.fb.nonNullable.group({
+      name: ['', Validators.required],
+      mobile: ['', [Validators.required, Validators.pattern('^[0-9]{0,11}$'), Validators.maxLength(11)]],
+      gender: [''],
+      nid: [''],
+    });
+  }
+
+  syncPassengers(): void {
+    const count = this.sameForAll ? 1 : this.selectedSeats().length;
+    while (this.passengers.length < count) {
+      this.passengers.push(this.createPassengerGroup());
+    }
+    while (this.passengers.length > count) {
+      this.passengers.removeAt(this.passengers.length - 1);
+    }
+  }
+
+  onSameForAllChange(): void {
+    this.syncPassengers();
   }
 
   seatClassLabel(seat: SeatAvailabilityDto): string {
@@ -330,19 +431,23 @@ export class BookingComponent implements OnInit {
     const trip = this.trip()!;
     const travelDate = this.travelDate();
     const selected = this.selectedSeats();
+    const passengers = value.passengers as any[];
 
     const request: SellTicketsRequest = {
       scheduleId: trip.scheduleId,
       travelDate,
-      items: selected.map(seat => ({
-        seatId: seat.seatId,
-        passengerName: value.passengerName,
-        mobileNumber: value.passengerMobile,
-        fareAmount: trip.fareAmount,
-        paymentMethod: value.paymentMethod,
-        nidOrPassport: value.nidOrPassport || undefined,
-        gender: value.gender || undefined,
-      })),
+      items: selected.map((seat, i) => {
+        const p = passengers[Math.min(i, passengers.length - 1)];
+        return {
+          seatId: seat.seatId,
+          passengerName: p.name,
+          mobileNumber: p.mobile,
+          fareAmount: trip.fareAmount,
+          paymentMethod: value.paymentMethod,
+          nidOrPassport: p.nid || undefined,
+          gender: p.gender || undefined,
+        };
+      }),
       remarks: value.remarks || undefined,
     };
 

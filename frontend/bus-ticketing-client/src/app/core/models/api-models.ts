@@ -49,6 +49,8 @@ export interface SeatAvailabilityDto {
   isDriver?: boolean;
   visualRow?: number;
   visualCol?: number;
+  passengerName?: string;
+  passengerGender?: string;
 }
 
 export interface TicketDto {
