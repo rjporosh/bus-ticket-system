@@ -156,7 +156,9 @@ type WizardStep = 'trip' | 'seat' | 'passenger' | 'confirmation';
                       </mat-form-field>
                       <mat-form-field appearance="outline">
                         <mat-label>Mobile Number *</mat-label>
-                        <input matInput formControlName="mobileNumber" />
+                        <input matInput formControlName="mobileNumber" maxlength="11">
+                        <mat-error *ngIf="passengerForm.get('mobileNumber')?.hasError('required')">Mobile is required</mat-error>
+                        <mat-error *ngIf="passengerForm.get('mobileNumber')?.hasError('pattern')">Numbers only, max 11 digits</mat-error>
                       </mat-form-field>
                       <mat-form-field appearance="outline">
                         <mat-label>NID / Passport (optional)</mat-label>
@@ -476,7 +478,7 @@ export class BookingComponent {
 
   protected readonly passengerForm = this.fb.nonNullable.group({
     passengerName: ['', Validators.required],
-    mobileNumber: ['', Validators.required],
+    mobileNumber: ['', [Validators.required, Validators.pattern('^[0-9]{0,11}$'), Validators.maxLength(11)]],
     nidOrPassport: [''],
     gender: [''],
     paymentMethod: [0, Validators.required],

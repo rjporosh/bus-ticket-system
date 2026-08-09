@@ -91,8 +91,20 @@ Database artifacts, release tracking, configurable real-bus seat layout, Postman
 
 ### Configurable real-bus seat layout
 - Backend: `SeatLayout.LayoutType` (`StandardGrid` | `RealBus`) + `LayoutConfigJson`
+- Admin: bus creation form exposes layout type, driver seat toggle, aisle gap, and per-row left/right seat counts
 - Frontend client: real-bus-shaped seat grid with driver seat, aisle gap, and configurable left/right groups
+- Backend `GetAvailableSeatsQueryHandler` computes proper `visualRow`/`visualCol` coordinates for accurate 2D rendering
 - Existing data defaults to `StandardGrid` — no breaking change
+
+### Per-seat passenger details
+- Client booking form uses `FormArray` so each selected seat gets its own passenger info
+- "Same for all seats" toggle collapses multi-seat bookings to a single form
+- Submit builds `SellTicketsRequest` with per-item passenger name, mobile, gender, NID
+- Sold seats display passenger initials and gender symbols (male/female) on the seat map
+
+### Mobile number validation
+- Frontend: `Validators.pattern('^[0-9]{0,11}$')` + `maxlength="11"` on both admin and client booking forms
+- Backend: `SellTicketCommandValidator` and `SellTicketsCommandValidator` enforce `MaxLength(20)` and required
 
 ### Postman collection
 - `docs/postman-scripts/` with environments, pre-request scripts (auto-login per role), post-response scripts, and example requests for every endpoint

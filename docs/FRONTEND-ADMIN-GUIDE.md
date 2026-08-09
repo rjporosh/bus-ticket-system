@@ -102,6 +102,12 @@ npm install
 npm run build
 ```
 
+## Current Key Components
+
+- `buses.component.ts` — Bus CRUD + seat map dialog. Bus creation form supports `LayoutType` (StandardGrid/RealBus), driver seat toggle, aisle gap, and per-row left/right seat counts. Seat map dialog renders RealBus layouts using `visualRow`/`visualCol` with driver seat styling.
+- `booking.component.ts` — Ticket selling wizard (trip → seat → passenger → confirmation). Mobile input validates numbers only with max 11 digits.
+- `dashboard.component.ts` — Sales and seat status overview
+
 ## Standards
 
 - All API paths must come from `api-endpoints.ts` — never hardcode strings

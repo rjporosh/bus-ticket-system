@@ -134,10 +134,17 @@ npm install
 npm run build
 ```
 
+## Current Key Components
+
+- `booking.component.ts` — Seat selection with real-bus-shaped grid (driver seat, left/right blocks, aisle gap), per-seat passenger `FormArray` with "Same for all seats" toggle, mobile validation (numbers only, max 11 digits), and `SellTicketsRequest` submission
+- `search.component.ts` — Trip search by date, origin, destination
+- `home.component.ts` — Landing page
+- `my-tickets.component.ts` — View and cancel customer bookings
+
 ## Standards
 
 - All API paths must come from `api-endpoints.ts` — never hardcode strings
-- All routes must be declared in `app.routes.ts` — never use programmatic navigation without a route entry
+- All routes must be declared in `app.routes.ts`
 - Use signals for local state, `async` pipe for templates
 - Material UI components only
 - Keep services thin — one method per API call

@@ -67,8 +67,10 @@ public surface has a different threat model than an internal tool).
 |---|---|---|
 | Separate Angular client app | ✅ | `frontend/bus-ticketing-client/` |
 | Public trip search | ✅ | No auth required for browsing |
-| Seat selection | ✅ | Interactive seat map UI |
-| Booking flow | ✅ | Passenger details + fare calculation |
+| Seat selection | ✅ | Interactive real-bus-shaped seat map with driver seat, left/right blocks, aisle gap, and visual coordinates |
+| Per-seat passenger details | ✅ | `FormArray` with "Same for all seats" toggle; each seat gets individual name, mobile, gender, NID |
+| Passenger gender on seat map | ✅ | Sold seats show initials and ♂/♀ symbols, color-coded blue/pink |
+| Booking flow | ✅ | Passenger details + fare calculation + per-seat data submission |
 | My Tickets | ✅ | View and cancel bookings |
 | Login | ✅ | Optional auth for returning customers |
 | Docker + nginx | ✅ | Multi-stage build with SPA fallback |
