@@ -10,6 +10,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AuthService } from '../../../core/services/auth.service';
 import { ProblemDetails } from '../../../core/models/api-models';
+import { TranslatePipe } from '../../../core/pipes/translate.pipe';
 
 @Component({
   selector: 'app-login',
@@ -22,6 +23,7 @@ import { ProblemDetails } from '../../../core/models/api-models';
     MatButtonModule,
     MatIconModule,
     MatProgressSpinnerModule,
+    TranslatePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -31,24 +33,24 @@ import { ProblemDetails } from '../../../core/models/api-models';
           <div class="login-card__badge">
             <mat-icon>directions_bus</mat-icon>
           </div>
-          <h1>Bus Ticketing System</h1>
-          <p class="mono">Booth Staff &amp; Admin Login</p>
+          <h1>{{ 'app.title' | translate }}</h1>
+          <p class="mono">{{ 'app.boothStaffAdminLogin' | translate }}</p>
         </div>
 
         <form [formGroup]="form" (ngSubmit)="submit()">
           <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Username</mat-label>
+            <mat-label>{{ 'app.username' | translate }}</mat-label>
             <input matInput formControlName="username" autocomplete="username" />
             @if (form.controls.username.hasError('required') && form.controls.username.touched) {
-              <mat-error>Username is required.</mat-error>
+              <mat-error>{{ 'app.usernameRequired' | translate }}</mat-error>
             }
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Password</mat-label>
+            <mat-label>{{ 'app.password' | translate }}</mat-label>
             <input matInput type="password" formControlName="password" autocomplete="current-password" />
             @if (form.controls.password.hasError('required') && form.controls.password.touched) {
-              <mat-error>Password is required.</mat-error>
+              <mat-error>{{ 'app.passwordRequired' | translate }}</mat-error>
             }
           </mat-form-field>
 
@@ -60,13 +62,13 @@ import { ProblemDetails } from '../../../core/models/api-models';
             @if (submitting()) {
               <mat-spinner diameter="20" />
             } @else {
-              Sign in
+              {{ 'app.signIn' | translate }}
             }
           </button>
         </form>
 
         <div class="login-card__hint">
-          <span class="mono">Example users:</span>
+          <span class="mono">{{ 'app.exampleUsers' | translate }}</span>
           dhaka_staff_1 · ctg_staff_1 · admin
         </div>
       </mat-card>

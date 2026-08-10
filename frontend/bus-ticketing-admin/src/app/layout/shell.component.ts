@@ -5,6 +5,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { AuthService } from '../core/services/auth.service';
+import { LanguageSwitcherComponent } from '../features/shared/language-switcher/language-switcher.component';
+import { TranslatePipe } from '../core/pipes/translate.pipe';
 
 interface NavItem {
   label: string;
@@ -14,20 +16,20 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { label: 'Dashboard', icon: 'dashboard', path: '/dashboard' },
-  { label: 'Ticketing', icon: 'confirmation_number', path: '/booking' },
-  { label: 'Schedules', icon: 'event', path: '/schedules' },
-  { label: 'Buses', icon: 'directions_bus', path: '/buses' },
-  { label: 'Routes', icon: 'alt_route', path: '/routes' },
-  { label: 'Stations', icon: 'location_on', path: '/stations' },
-  { label: 'Users', icon: 'group', path: '/users', adminOnly: true },
-  { label: 'Roles', icon: 'admin_panel_settings', path: '/roles', adminOnly: true },
+  { label: 'app.dashboard', icon: 'dashboard', path: '/dashboard' },
+  { label: 'app.ticketing', icon: 'confirmation_number', path: '/booking' },
+  { label: 'app.schedules', icon: 'event', path: '/schedules' },
+  { label: 'app.buses', icon: 'directions_bus', path: '/buses' },
+  { label: 'app.route', icon: 'alt_route', path: '/routes' },
+  { label: 'app.station', icon: 'location_on', path: '/stations' },
+  { label: 'app.users', icon: 'group', path: '/users', adminOnly: true },
+  { label: 'app.roles', icon: 'admin_panel_settings', path: '/roles', adminOnly: true },
 ];
 
 @Component({
   selector: 'app-shell',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, MatIconModule, MatButtonModule, MatMenuModule, MatToolbarModule],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, MatIconModule, MatButtonModule, MatMenuModule, MatToolbarModule, LanguageSwitcherComponent, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="shell">
@@ -44,7 +46,7 @@ const NAV_ITEMS: NavItem[] = [
           @for (item of visibleNavItems(); track item.path) {
             <a [routerLink]="item.path" routerLinkActive="active" class="sidebar__link">
               <mat-icon>{{ item.icon }}</mat-icon>
-              <span>{{ item.label }}</span>
+              <span>{{ item.label | translate }}</span>
             </a>
           }
         </nav>
@@ -58,6 +60,8 @@ const NAV_ITEMS: NavItem[] = [
         <mat-toolbar class="topbar">
           <span class="topbar__spacer"></span>
           <span class="board-chip board-chip--accent mono">{{ today() }}</span>
+
+          <app-language-switcher />
 
           <button mat-icon-button [matMenuTriggerFor]="userMenu" aria-label="Account menu">
             <mat-icon>account_circle</mat-icon>

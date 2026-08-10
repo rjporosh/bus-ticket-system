@@ -3,6 +3,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTableModule } from '@angular/material/table';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { TranslatePipe } from '../../core/pipes/translate.pipe';
 import { DashboardService } from '../../core/services/feature-services';
 import { BusSeatStatusDto, DashboardSummaryDto, RouteSalesDto } from '../../core/models/api-models';
 
@@ -15,11 +16,11 @@ interface SummaryTile {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [MatCardModule, MatIconModule, MatTableModule, MatProgressSpinnerModule],
+  imports: [MatCardModule, MatIconModule, MatTableModule, MatProgressSpinnerModule, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="page-container">
-      <h1>Today's Overview</h1>
+      <h1>{{ 'app.todayOverview' | translate }}</h1>
       <p class="mono subtitle">{{ todayLabel() }}</p>
 
       @if (loading()) {
@@ -31,7 +32,7 @@ interface SummaryTile {
               <mat-icon class="tile__icon">{{ tile.icon }}</mat-icon>
               <div>
                 <div class="tile__value mono">{{ tile.value }}</div>
-                <div class="tile__label">{{ tile.label }}</div>
+                <div class="tile__label">{{ tile.label | translate }}</div>
               </div>
             </mat-card>
           }
@@ -39,25 +40,25 @@ interface SummaryTile {
 
         <div class="two-col">
           <mat-card class="card-surface trips-card">
-            <h2>Bus-wise Seat Status</h2>
+            <h2>{{ 'app.busWiseSeatStatus' | translate }}</h2>
             @if (busStatus().length === 0) {
-              <p class="empty-state">No trips are scheduled for today.</p>
+              <p class="empty-state">{{ 'app.noTrips' | translate }}</p>
             } @else {
               <table mat-table [dataSource]="busStatus()" class="mono-table">
                 <ng-container matColumnDef="bus">
-                  <th mat-header-cell *matHeaderCellDef>Bus</th>
+                  <th mat-header-cell *matHeaderCellDef>{{ 'app.bus' | translate }}</th>
                   <td mat-cell *matCellDef="let b"><span class="mono">{{ b.busNumber }}</span></td>
                 </ng-container>
                 <ng-container matColumnDef="route">
-                  <th mat-header-cell *matHeaderCellDef>Route</th>
+                  <th mat-header-cell *matHeaderCellDef>{{ 'app.route' | translate }}</th>
                   <td mat-cell *matCellDef="let b">{{ b.routeName }}</td>
                 </ng-container>
                 <ng-container matColumnDef="time">
-                  <th mat-header-cell *matHeaderCellDef>Time</th>
+                  <th mat-header-cell *matHeaderCellDef>{{ 'app.time' | translate }}</th>
                   <td mat-cell *matCellDef="let b"><span class="mono">{{ b.departureTime.slice(0, 5) }}</span></td>
                 </ng-container>
                 <ng-container matColumnDef="available">
-                  <th mat-header-cell *matHeaderCellDef>Available</th>
+                  <th mat-header-cell *matHeaderCellDef>{{ 'app.available' | translate }}</th>
                   <td mat-cell *matCellDef="let b">{{ b.availableSeats }} / {{ b.totalSeats }}</td>
                 </ng-container>
                 <tr mat-header-row *matHeaderRowDef="busColumns"></tr>
@@ -67,25 +68,25 @@ interface SummaryTile {
           </mat-card>
 
           <mat-card class="card-surface trips-card">
-            <h2>Route-wise Sales</h2>
+            <h2>{{ 'app.routeWiseSales' | translate }}</h2>
             @if (routeSales().length === 0) {
-              <p class="empty-state">No sales recorded for today.</p>
+              <p class="empty-state">{{ 'app.noSales' | translate }}</p>
             } @else {
               <table mat-table [dataSource]="routeSales()" class="mono-table">
                 <ng-container matColumnDef="route">
-                  <th mat-header-cell *matHeaderCellDef>Route</th>
+                  <th mat-header-cell *matHeaderCellDef>{{ 'app.route' | translate }}</th>
                   <td mat-cell *matCellDef="let r">{{ r.routeName }}</td>
                 </ng-container>
                 <ng-container matColumnDef="sold">
-                  <th mat-header-cell *matHeaderCellDef>Sold</th>
+                  <th mat-header-cell *matHeaderCellDef>{{ 'app.sold' | translate }}</th>
                   <td mat-cell *matCellDef="let r">{{ r.soldTickets }}</td>
                 </ng-container>
                 <ng-container matColumnDef="available">
-                  <th mat-header-cell *matHeaderCellDef>Available</th>
+                  <th mat-header-cell *matHeaderCellDef>{{ 'app.available' | translate }}</th>
                   <td mat-cell *matCellDef="let r">{{ r.availableSeats }}</td>
                 </ng-container>
                 <ng-container matColumnDef="sales">
-                  <th mat-header-cell *matHeaderCellDef>Sales</th>
+                  <th mat-header-cell *matHeaderCellDef>{{ 'app.amount' | translate }}</th>
                   <td mat-cell *matCellDef="let r">৳{{ r.totalSales }}</td>
                 </ng-container>
                 <tr mat-header-row *matHeaderRowDef="routeColumns"></tr>
@@ -133,10 +134,10 @@ export class DashboardComponent implements OnInit {
     const s = this.summary();
     if (!s) return [];
     return [
-      { label: 'Total Seats', value: String(s.totalSeats), icon: 'event_seat' },
-      { label: 'Sold Seats', value: String(s.soldSeats), icon: 'confirmation_number' },
-      { label: 'Available Seats', value: String(s.availableSeats), icon: 'event_available' },
-      { label: "Today's Sales", value: `৳${s.totalSales}`, icon: 'payments' },
+      { label: 'app.totalSeats', value: String(s.totalSeats), icon: 'event_seat' },
+      { label: 'app.soldSeats', value: String(s.soldSeats), icon: 'confirmation_number' },
+      { label: 'app.availableSeats', value: String(s.availableSeats), icon: 'event_available' },
+      { label: "app.todaySales", value: `৳${s.totalSales}`, icon: 'payments' },
     ];
   });
 
