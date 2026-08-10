@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="SharedResources" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:element name="SharedResources" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <SharedResources>
+    <data name="Required" xml:space="preserve">
+      <value>The {0} field is required.</value>
+    </data>
+    <data name="InvalidCredentials" xml:space="preserve">
+      <value>Invalid username or password.</value>
+    </data>
+    <data name="InvalidRefreshToken" xml:space="preserve">
+      <value>Invalid refresh token.</value>
+    </data>
+    <data name="RefreshTokenReused" xml:space="preserve">
+      <value>This refresh token has already been used. All sessions have been revoked for safety.</value>
+    </data>
+    <data name="RefreshTokenExpired" xml:space="preserve">
+      <value>Refresh token has expired.</value>
+    </data>
+    <data name="AccountDeactivated" xml:space="preserve">
+      <value>This account has been deactivated.</value>
+    </data>
+    <data name="UserNotFound" xml:space="preserve">
+      <value>User not found.</value>
+    </data>
+    <data name="TicketNotFound" xml:space="preserve">
+      <value>Ticket not found.</value>
+    </data>
+    <data name="PaymentFailed" xml:space="preserve">
+      <value>Payment failed. Please try again.</value>
+    </data>
+    <data name="PaymentCaptured" xml:space="preserve">
+      <value>Payment captured successfully.</value>
+    </data>
+    <data name="BookingConfirmed" xml:space="preserve">
+      <value>Booking confirmed successfully.</value>
+    </data>
+    <data name="SeatNotAvailable" xml:space="preserve">
+      <value>Seat is not available.</value>
+    </data>
+    <data name="ScheduleNotFound" xml:space="preserve">
+      <value>Schedule not found.</value>
+    </data>
+    <data name="Unauthorized" xml:space="preserve">
+      <value>Unauthorized access.</value>
+    </data>
+    <data name="Forbidden" xml:space="preserve">
+      <value>Access forbidden.</value>
+    </data>
+    <data name="InternalServerError" xml:space="preserve">
+      <value>An internal server error occurred.</value>
+    </data>
+    <data name="BadRequest" xml:space="preserve">
+      <value>Bad request.</value>
+    </data>
+    <data name="NotFound" xml:space="preserve">
+      <value>Resource not found.</value>
+    </data>
+    <data name="Conflict" xml:space="preserve">
+      <value>Resource conflict.</value>
+    </data>
+    <data name="ValidationErrors" xml:space="preserve">
+      <value>One or more validation errors occurred.</value>
+    </data>
+    <data name="PaymentNotFound" xml:space="preserve">
+      <value>Payment was not found.</value>
+    </data>
+    <data name="RouteNotFound" xml:space="preserve">
+      <value>Route not found.</value>
+    </data>
+    <data name="BusNotFound" xml:space="preserve">
+      <value>Bus not found.</value>
+    </data>
+    <data name="StationNotFound" xml:space="preserve">
+      <value>Station not found.</value>
+    </data>
+    <data name="RoleNotFound" xml:space="preserve">
+      <value>Role not found.</value>
+    </data>
+    <data name="RoleAlreadyExists" xml:space="preserve">
+      <value>Role already exists.</value>
+    </data>
+    <data name="UsernameTaken" xml:space="preserve">
+      <value>Username is already taken.</value>
+    </data>
+    <data name="EmailAlreadyRegistered" xml:space="preserve">
+      <value>Email is already registered.</value>
+    </data>
+    <data name="ConcurrencyConflict" xml:space="preserve">
+      <value>The resource was modified by another request. Please reload and try again.</value>
+    </data>
+  </SharedResources>
+</root>

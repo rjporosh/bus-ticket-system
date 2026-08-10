@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="SharedResources" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:element name="SharedResources" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <SharedResources>
+    <data name="Required" xml:space="preserve">
+      <value>{0} ফিল্ডটি প্রয়োজনীয়।</value>
+    </data>
+    <data name="InvalidCredentials" xml:space="preserve">
+      <value>অবৈধ ব্যবহারকারী নাম বা পাসওয়ার্ড।</value>
+    </data>
+    <data name="InvalidRefreshToken" xml:space="preserve">
+      <value>অবৈধ রিফ্রেশ টোকেন।</value>
+    </data>
+    <data name="RefreshTokenReused" xml:space="preserve">
+      <value>এই রিফ্রেশ টোকেনটি ইতিমধ্যে ব্যবহৃত হয়েছে। নিরাপত্তার জন্য সমস্ত সেশান বাতিল করা হয়েছে।</value>
+    </data>
+    <data name="RefreshTokenExpired" xml:space="preserve">
+      <value>রিফ্রেশ টোকেনের মেয়াদ শেষ হয়ে গেছে।</value>
+    </data>
+    <data name="AccountDeactivated" xml:space="preserve">
+      <value>এই অ্যাকাউন্টটি নিষ্ক্রিয় করা হয়েছে।</value>
+    </data>
+    <data name="UserNotFound" xml:space="preserve">
+      <value>ব্যবহারকারী পাওয়া যায়নি।</value>
+    </data>
+    <data name="TicketNotFound" xml:space="preserve">
+      <value>টিকেট পাওয়া যায়নি।</value>
+    </data>
+    <data name="PaymentFailed" xml:space="preserve">
+      <value>পেমেন্ট ব্যর্থ হয়েছে। অনুগ্রহপূর্বক আবার চেষ্টা করুন।</value>
+    </data>
+    <data name="PaymentCaptured" xml:space="preserve">
+      <value>পেমেন্ট সফলভাবে গ্রহণ করা হয়েছে।</value>
+    </data>
+    <data name="BookingConfirmed" xml:space="preserve">
+      <value>বুকিং সফলভাবে নিশ্চিত হয়েছে।</value>
+    </data>
+    <data name="SeatNotAvailable" xml:space="preserve">
+      <value>সীটটি উপলব্ধ নেই।</value>
+    </data>
+    <data name="ScheduleNotFound" xml:space="preserve">
+      <value>সময়সূচী পাওয়া যায়নি।</value>
+    </data>
+    <data name="Unauthorized" xml:space="preserve">
+      <value>অনুমতি নেই।</value>
+    </data>
+    <data name="Forbidden" xml:space="preserve">
+      <value>প্রবেশ নিষিদ্ধ।</value>
+    </data>
+    <data name="InternalServerError" xml:space="preserve">
+      <value>একটি অভ্যন্তরীণ সার্ভার ত্রুটি হয়েছে।</value>
+    </data>
+    <data name="BadRequest" xml:space="preserve">
+      <value>অনুরোধটি অসাংঘতিক।</value>
+    </data>
+    <data name="NotFound" xml:space="preserve">
+      <value>সম্পদ পাওয়া যায়নি।</value>
+    </data>
+    <data name="Conflict" xml:space="preserve">
+      <value>সম্পদ দ্বন্দ্ব।</value>
+    </data>
+    <data name="ValidationErrors" xml:space="preserve">
+      <value>এক বা একাধিক বৈধকরণ ত্রুটি হয়েছে।</value>
+    </data>
+    <data name="PaymentNotFound" xml:space="preserve">
+      <value>পেমেন্ট পাওয়া যায়নি।</value>
+    </data>
+    <data name="RouteNotFound" xml:space="preserve">
+      <value>রুট পাওয়া যায়নি।</value>
+    </data>
+    <data name="BusNotFound" xml:space="preserve">
+      <value>বাস পাওয়া যায়নি।</value>
+    </data>
+    <data name="StationNotFound" xml:space="preserve">
+      <value>স্টেশন পাওয়া যায়নি।</value>
+    </data>
+    <data name="RoleNotFound" xml:space="preserve">
+      <value>রোল পাওয়া যায়নি।</value>
+    </data>
+    <data name="RoleAlreadyExists" xml:space="preserve">
+      <value>রোলটি ইতিমধ্যে অস্তিত্ব में রয়েছে।</value>
+    </data>
+    <data name="UsernameTaken" xml:space="preserve">
+      <value>ব্যবহারকারী নামটি ইতিমধ্যে নেওয়া হয়েছে।</value>
+    </data>
+    <data name="EmailAlreadyRegistered" xml:space="preserve">
+      <value>ইমেইলটি ইতিমধ্যে নিবন্ধিত।</value>
+    </data>
+    <data name="ConcurrencyConflict" xml:space="preserve">
+      <value>সম্পদটি অন্য অনুরোধে পরিবর্তন করা হয়েছে। অনুগ্রহপূর্বক পুনরায় লোড করে আবার চেষ্টা করুন।</value>
+    </data>
+  </SharedResources>
+</root>

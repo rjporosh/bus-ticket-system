@@ -1,11 +1,13 @@
 using Asp.Versioning;
 using BusTicketing.Api.Middleware;
+using BusTicketing.Application.Common.Localization;
 using BusTicketing.Application.Common.Models;
 using BusTicketing.Application.Features.Booking;
 using BusTicketing.Domain.Enums;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Localization;
 
 namespace BusTicketing.Api.Controllers.V1;
 
@@ -17,7 +19,12 @@ namespace BusTicketing.Api.Controllers.V1;
 public class BookingController : ControllerBase
 {
     private readonly ISender _sender;
-    public BookingController(ISender sender) => _sender = sender;
+    private readonly IStringLocalizer<SharedResources> _localizer;
+    public BookingController(ISender sender, IStringLocalizer<SharedResources> localizer)
+    {
+        _sender = sender;
+        _localizer = localizer;
+    }
 
     /// <summary>Gets the seat map for a schedule on a specific travel date, with sold seats flagged.</summary>
     [HttpGet("schedules/{scheduleId:guid}/seats")]
@@ -25,7 +32,7 @@ public class BookingController : ControllerBase
     [ProducesResponseType(typeof(List<SeatAvailabilityDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IResult> GetAvailableSeats(Guid scheduleId, [FromQuery] DateOnly travelDate, CancellationToken cancellationToken)
-        => (await _sender.Send(new GetAvailableSeatsQuery(scheduleId, travelDate), cancellationToken)).ToApiResult();
+        => (await _sender.Send(new GetAvailableSeatsQuery(scheduleId, travelDate), cancellationToken)).ToApiResult(localizer: _localizer);
 
     /// <summary>
     /// Sells a ticket for one seat on one schedule/date, capturing a mock payment in the
@@ -40,7 +47,7 @@ public class BookingController : ControllerBase
     public async Task<IResult> SellTicket([FromBody] SellTicketCommand command, CancellationToken cancellationToken)
     {
         var result = await _sender.Send(command, cancellationToken);
-        return result.ToApiResult(t => Microsoft.AspNetCore.Http.Results.Created($"/api/v1/booking/tickets/{t.Id}", t));
+        return result.ToApiResult(t => Microsoft.AspNetCore.Http.Results.Created($"/api/v1/booking/tickets/{t.Id}", t), _localizer);
     }
 
     /// <summary>Sells multiple seats in one transaction for the same schedule/date.</summary>
@@ -52,7 +59,7 @@ public class BookingController : ControllerBase
     public async Task<IResult> SellTickets([FromBody] SellTicketsCommand command, CancellationToken cancellationToken)
     {
         var result = await _sender.Send(command, cancellationToken);
-        return result.ToApiResult(t => Microsoft.AspNetCore.Http.Results.Created($"/api/v1/booking/tickets/batch", t));
+        return result.ToApiResult(t => Microsoft.AspNetCore.Http.Results.Created($"/api/v1/booking/tickets/batch", t), _localizer);
     }
 
     /// <summary>Cancels a sold ticket before its journey's departure time, freeing the seat and refunding the mock payment.</summary>
@@ -62,7 +69,7 @@ public class BookingController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<IResult> CancelTicket(Guid ticketId, [FromBody] CancelTicketRequest request, CancellationToken cancellationToken)
-        => (await _sender.Send(new CancelTicketCommand(ticketId, request.Reason), cancellationToken)).ToApiResult();
+        => (await _sender.Send(new CancelTicketCommand(ticketId, request.Reason), cancellationToken)).ToApiResult(_localizer);
 
     /// <summary>Searches tickets by ticket number, mobile number, travel date, route or status, paginated.</summary>
     [HttpGet("tickets")]
@@ -88,7 +95,7 @@ public class BookingController : ControllerBase
     [ProducesResponseType(typeof(TicketQrCodeDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IResult> GetTicketQrCode(Guid ticketId, CancellationToken cancellationToken)
-        => (await _sender.Send(new GetTicketQrCodeQuery(ticketId), cancellationToken)).ToApiResult();
+        => (await _sender.Send(new GetTicketQrCodeQuery(ticketId), cancellationToken)).ToApiResult(localizer: _localizer);
 
     /// <summary>Returns a printable HTML page for the specified ticket.</summary>
     [HttpGet("tickets/{ticketId:guid}/print")]
@@ -99,7 +106,7 @@ public class BookingController : ControllerBase
     {
         var result = await _sender.Send(new GetTicketPrintQuery(ticketId), cancellationToken);
         if (result.IsFailure)
-            return result.ToApiResult();
+            return result.ToApiResult(localizer: _localizer);
 
         return Results.Content(result.Value.PrintableHtml, "text/html");
     }

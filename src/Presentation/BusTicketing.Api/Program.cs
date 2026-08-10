@@ -10,8 +10,10 @@ using BusTicketing.Infrastructure.Services;
 using HealthChecks.UI.Client;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.OpenApi;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Localization;
 using Scalar.AspNetCore;
 using Serilog;
 
@@ -44,6 +46,16 @@ try
 
     builder.Services.AddApplication();
     builder.Services.AddInfrastructure(builder.Configuration);
+
+    builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
+
+    var supportedCultures = new[] { "en", "bn" };
+    var localizationOptions = new RequestLocalizationOptions()
+        .SetDefaultCulture("en")
+        .AddSupportedCultures(supportedCultures)
+        .AddSupportedUICultures(supportedCultures);
+    localizationOptions.RequestCultureProviders.Clear();
+    builder.Services.AddSingleton(localizationOptions);
 
     builder.Services.AddControllers();
     builder.Services.AddEndpointsApiExplorer();
@@ -89,6 +101,7 @@ try
 
     var app = builder.Build();
 
+    app.UseRequestLocalization(app.Services.GetRequiredService<RequestLocalizationOptions>());
     app.UseSerilogRequestLogging();
     app.UseMiddleware<GlobalExceptionMiddleware>();
     app.UseMiddleware<RateLimitMiddleware>();

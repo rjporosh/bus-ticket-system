@@ -1,30 +1,27 @@
 using System.Net;
+using BusTicketing.Application.Common.Localization;
 using BusTicketing.Application.Common.Models;
 using BusTicketing.Domain.Exceptions;
 using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace BusTicketing.Api.Middleware;
 
-/// <summary>
-/// Single choke point for turning exceptions into RFC 7807 ProblemDetails responses.
-/// Handlers should prefer returning a failed Result for anticipated failures; this
-/// middleware exists for the exceptions that still legitimately propagate
-/// (FluentValidation's own exception type, EF concurrency conflicts, domain
-/// exceptions raised deep in aggregate methods, and truly unexpected errors).
-/// </summary>
 public class GlobalExceptionMiddleware
 {
     private readonly RequestDelegate _next;
     private readonly ILogger<GlobalExceptionMiddleware> _logger;
     private readonly IHostEnvironment _environment;
+    private readonly IStringLocalizer<SharedResources> _localizer;
 
-    public GlobalExceptionMiddleware(RequestDelegate next, ILogger<GlobalExceptionMiddleware> logger, IHostEnvironment environment)
+    public GlobalExceptionMiddleware(RequestDelegate next, ILogger<GlobalExceptionMiddleware> logger, IHostEnvironment environment, IStringLocalizer<SharedResources> localizer)
     {
         _next = next;
         _logger = logger;
         _environment = environment;
+        _localizer = localizer;
     }
 
     public async Task InvokeAsync(HttpContext context)
@@ -41,16 +38,18 @@ public class GlobalExceptionMiddleware
 
     private async Task HandleAsync(HttpContext context, Exception exception)
     {
-        var (statusCode, title) = exception switch
+        var (statusCode, titleKey) = exception switch
         {
-            ValidationException => (HttpStatusCode.BadRequest, "One or more validation errors occurred."),
-            EntityNotFoundException => (HttpStatusCode.NotFound, "The requested resource was not found."),
-            BusinessRuleViolationException => (HttpStatusCode.Conflict, "The request conflicts with the current state of the resource."),
-            DbUpdateConcurrencyException => (HttpStatusCode.Conflict, "The resource was modified by another request. Please reload and try again."),
-            DomainException => (HttpStatusCode.UnprocessableEntity, "The request violates a business rule."),
-            UnauthorizedAccessException => (HttpStatusCode.Forbidden, "You do not have permission to perform this action."),
-            _ => (HttpStatusCode.InternalServerError, "An unexpected error occurred.")
+            ValidationException => (HttpStatusCode.BadRequest, "BadRequest"),
+            EntityNotFoundException => (HttpStatusCode.NotFound, "NotFound"),
+            BusinessRuleViolationException => (HttpStatusCode.Conflict, "Conflict"),
+            DbUpdateConcurrencyException => (HttpStatusCode.Conflict, "ConcurrencyConflict"),
+            DomainException => (HttpStatusCode.UnprocessableEntity, "BadRequest"),
+            UnauthorizedAccessException => (HttpStatusCode.Forbidden, "Forbidden"),
+            _ => (HttpStatusCode.InternalServerError, "InternalServerError")
         };
+
+        var title = _localizer[titleKey];
 
         if (statusCode == HttpStatusCode.InternalServerError)
             _logger.LogError(exception, "Unhandled exception processing {Method} {Path}", context.Request.Method, context.Request.Path);
@@ -82,24 +81,23 @@ public class GlobalExceptionMiddleware
     }
 }
 
-/// <summary>Maps the Result/Result&lt;T&gt; pattern onto ASP.NET Core's IResult, so controllers stay a thin translation layer.</summary>
 public static class ResultExtensions
 {
-    public static IResult ToApiResult(this Result result)
+    public static IResult ToApiResult(this Result result, IStringLocalizer? localizer = null)
     {
         if (result.IsSuccess) return Microsoft.AspNetCore.Http.Results.NoContent();
-        return Problem(result.Error);
+        return Problem(result.Error, localizer);
     }
 
-    public static IResult ToApiResult<T>(this Result<T> result, Func<T, IResult>? onSuccess = null)
+    public static IResult ToApiResult<T>(this Result<T> result, Func<T, IResult>? onSuccess = null, IStringLocalizer? localizer = null)
     {
         if (result.IsSuccess)
             return onSuccess is not null ? onSuccess(result.Value) : Microsoft.AspNetCore.Http.Results.Ok(result.Value);
 
-        return Problem(result.Error);
+        return Problem(result.Error, localizer);
     }
 
-    private static IResult Problem(Error error)
+    private static IResult Problem(Error error, IStringLocalizer? localizer = null)
     {
         var statusCode = error.Type switch
         {
@@ -111,15 +109,18 @@ public static class ResultExtensions
             _ => StatusCodes.Status500InternalServerError
         };
 
+        var title = localizer is not null ? localizer[error.Code] : error.Code;
+
         if (error.Type == ErrorType.Validation && error.ValidationErrors is not null)
         {
             return Microsoft.AspNetCore.Http.Results.ValidationProblem(
                 error.ValidationErrors.ToDictionary(kv => kv.Key, kv => kv.Value),
-                title: error.Message);
+                title: title);
         }
 
         return Microsoft.AspNetCore.Http.Results.Problem(
-            title: error.Message,
+            title: title,
+            detail: error.Message,
             statusCode: statusCode,
             type: $"https://httpstatuses.io/{statusCode}");
     }

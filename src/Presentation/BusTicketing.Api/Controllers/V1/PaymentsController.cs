@@ -1,11 +1,13 @@
 using Asp.Versioning;
 using BusTicketing.Api.Middleware;
+using BusTicketing.Application.Common.Localization;
 using BusTicketing.Application.Common.Models;
 using BusTicketing.Application.Features.Booking;
 using BusTicketing.Domain.Enums;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Localization;
 
 namespace BusTicketing.Api.Controllers.V1;
 
@@ -17,7 +19,12 @@ namespace BusTicketing.Api.Controllers.V1;
 public class PaymentsController : ControllerBase
 {
     private readonly ISender _sender;
-    public PaymentsController(ISender sender) => _sender = sender;
+    private readonly IStringLocalizer<SharedResources> _localizer;
+    public PaymentsController(ISender sender, IStringLocalizer<SharedResources> localizer)
+    {
+        _sender = sender;
+        _localizer = localizer;
+    }
 
     [HttpGet]
     [ProducesResponseType(typeof(PaginatedList<PaymentDto>), StatusCodes.Status200OK)]
@@ -33,7 +40,7 @@ public class PaymentsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<IResult> Capture(Guid id, CancellationToken cancellationToken)
-        => (await _sender.Send(new CapturePaymentCommand(id), cancellationToken)).ToApiResult();
+        => (await _sender.Send(new CapturePaymentCommand(id), cancellationToken)).ToApiResult(localizer: _localizer);
 
     [HttpPost("{id:guid}/refund")]
     [Authorize(Policy = "Permission:PaymentRefund")]
@@ -41,7 +48,7 @@ public class PaymentsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<IResult> Refund(Guid id, CancellationToken cancellationToken)
-        => (await _sender.Send(new RefundPaymentCommand(id), cancellationToken)).ToApiResult();
+        => (await _sender.Send(new RefundPaymentCommand(id), cancellationToken)).ToApiResult(localizer: _localizer);
 
     [HttpPost("{id:guid}/fail")]
     [Authorize(Policy = "Permission:PaymentFail")]
@@ -51,6 +58,6 @@ public class PaymentsController : ControllerBase
     public async Task<IResult> Fail(Guid id, CancellationToken cancellationToken)
     {
         var reason = "Failed by admin";
-        return (await _sender.Send(new FailPaymentCommand(id, reason), cancellationToken)).ToApiResult();
+        return (await _sender.Send(new FailPaymentCommand(id, reason), cancellationToken)).ToApiResult(localizer: _localizer);
     }
 }
