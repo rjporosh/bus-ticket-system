@@ -1,101 +1,102 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { TranslatePipe } from '../../core/pipes/translate.pipe';
 import { ApiService } from '../../core/services/api.service';
 import { TripDto } from '../../core/models/api-models';
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, TranslatePipe],
   template: `
     <div class="home-container">
       <section class="hero">
         <div class="hero-content">
-          <h1>Plan Your Journey with BusTicketing</h1>
-          <p>Book bus tickets online. Safe, fast, and convenient.</p>
-          <a routerLink="/search" class="cta-button">Search Trips</a>
+          <h1>{{ 'app.findYourTrip' | translate }}</h1>
+          <p>{{ 'app.easySearch' | translate }}</p>
+          <a routerLink="/search" class="cta-button">{{ 'app.searchTrips' | translate }}</a>
         </div>
       </section>
 
       <section class="features">
         <div class="feature-card">
           <div class="feature-icon">🔍</div>
-          <h3>Easy Search</h3>
-          <p>Find trips by route and date in seconds.</p>
+          <h3>{{ 'app.easySearch' | translate }}</h3>
+          <p>{{ 'app.searchTrips' | translate }}</p>
         </div>
         <div class="feature-card">
           <div class="feature-icon">💺</div>
-          <h3>Choose Your Seat</h3>
-          <p>Select the perfect seat from an interactive seat map.</p>
+          <h3>{{ 'app.chooseYourSeat' | translate }}</h3>
+          <p>{{ 'app.selectSeatsTitle' | translate }}</p>
         </div>
         <div class="feature-card">
           <div class="feature-icon">📱</div>
-          <h3>Instant Booking</h3>
-          <p>Book tickets and get confirmation immediately.</p>
+          <h3>{{ 'app.instantBooking' | translate }}</h3>
+          <p>{{ 'app.confirmBooking' | translate }}</p>
         </div>
       </section>
 
       <section class="how-it-works">
-        <h2>How It Works</h2>
+        <h2>{{ 'app.howItWorks' | translate }}</h2>
         <div class="steps">
           <div class="step">
             <span class="step-number">1</span>
-            <h4>Search</h4>
-            <p>Enter your route and travel date.</p>
+            <h4>{{ 'app.search' | translate }}</h4>
+            <p>{{ 'app.from' | translate }} · {{ 'app.to' | translate }}</p>
           </div>
           <div class="step">
             <span class="step-number">2</span>
-            <h4>Select Seats</h4>
-            <p>Pick seats from the available seat map.</p>
+            <h4>{{ 'app.selectSeatsTitle' | translate }}</h4>
+            <p>{{ 'app.seat' | translate }}</p>
           </div>
           <div class="step">
             <span class="step-number">3</span>
-            <h4>Enter Details</h4>
-            <p>Provide passenger information.</p>
+            <h4>{{ 'app.passengerInfo' | translate }}</h4>
+            <p>{{ 'app.fullName' | translate }}, {{ 'app.mobile' | translate }}</p>
           </div>
           <div class="step">
             <span class="step-number">4</span>
-            <h4>Confirm & Pay</h4>
-            <p>Complete mock payment and receive ticket.</p>
+            <h4>{{ 'app.confirmPayTitle' | translate }}</h4>
+            <p>{{ 'app.payment' | translate }}</p>
           </div>
         </div>
       </section>
 
       <section class="featured-trips" *ngIf="featuredTrips().length > 0">
-        <h2>Featured Trips Today</h2>
+        <h2>{{ 'app.featuredTripsToday' | translate }}</h2>
         <div class="trip-list">
           <div class="trip-card" *ngFor="let trip of featuredTrips()">
             <div class="trip-header">
               <div class="route-info">
                 <span class="route">{{ trip.routeName }}</span>
               </div>
-              <div class="trip-date">Today</div>
+              <div class="trip-date">{{ 'app.todayOverview' | translate }}</div>
             </div>
             <div class="trip-body">
               <div class="trip-detail">
-                <span class="label">Bus</span>
+                <span class="label">{{ 'app.bus' | translate }}</span>
                 <span class="value">{{ trip.busNumber }}</span>
               </div>
               <div class="trip-detail">
-                <span class="label">Available Seats</span>
+                <span class="label">{{ 'app.available' | translate }} {{ 'app.seats' | translate }}</span>
                 <span class="value">{{ trip.availableSeats }} / {{ trip.totalSeats }}</span>
               </div>
               <div class="trip-detail">
-                <span class="label">Departure</span>
+                <span class="label">{{ 'app.departure' | translate }}</span>
                 <span class="value">{{ trip.departureTime }}</span>
               </div>
               <div class="trip-detail">
-                <span class="label">Arrival</span>
+                <span class="label">{{ 'app.arrival' | translate }}</span>
                 <span class="value">{{ trip.arrivalTime }}</span>
               </div>
               <div class="trip-detail">
-                <span class="label">Fare</span>
+                <span class="label">{{ 'app.fare' | translate }}</span>
                 <span class="value price">৳{{ trip.fareAmount | number:'1.2-2' }}</span>
               </div>
             </div>
             <div class="trip-footer">
-              <a mat-raised-button color="accent" [routerLink]="['/search']">View Details</a>
+              <a mat-raised-button color="accent" [routerLink]="['/search']">{{ 'app.view' | translate }}</a>
             </div>
           </div>
         </div>
