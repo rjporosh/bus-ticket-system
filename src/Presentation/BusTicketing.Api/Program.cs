@@ -166,23 +166,5 @@ finally
     Log.CloseAndFlush();
 }
 
-if (customLogger != null)
-{
-    AppDomain.CurrentDomain.UnhandledException += (sender, e) =>
-    {
-        if (e.ExceptionObject is Exception ex)
-        {
-            Log.Error(ex, "Unhandled exception caught by AppDomain");
-            customLogger.LogRuntimeErrorAsync("Unhandled AppDomain exception", ex).GetAwaiter().GetResult();
-        }
-    };
-
-    TaskScheduler.UnobservedTaskException += (sender, e) =>
-    {
-        Log.Error(e.Exception, "Unobserved task exception");
-        customLogger.LogRuntimeErrorAsync("Unobserved task exception", e.Exception).GetAwaiter().GetResult();
-    };
-}
-
-/// <summary>Partial Program class so WebApplicationFactory<Program> can be used from integration tests.</summary>
+/// <summary>Partial Program class so WebApplicationFactory&lt;Program&gt; can be used from integration tests.</summary>
 public partial class Program { }

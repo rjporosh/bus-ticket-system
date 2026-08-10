@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormArray, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatCardModule } from '@angular/material/card';
@@ -37,6 +38,7 @@ type WizardStep = 'trip' | 'seat' | 'passenger' | 'confirmation';
   selector: 'app-booking',
   standalone: true,
   imports: [
+    CommonModule,
     ReactiveFormsModule,
     MatTabsModule,
     MatCardModule,
@@ -197,8 +199,8 @@ type WizardStep = 'trip' | 'seat' | 'passenger' | 'confirmation';
                               <mat-form-field appearance="outline">
                                 <mat-label>Mobile Number *</mat-label>
                                 <input matInput formControlName="mobile" placeholder="01XXXXXXXXX" maxlength="11" />
-                                <mat-error *ngIf="passenger.get('mobile')?.hasError('required')">Mobile is required</mat-error>
-                                <mat-error *ngIf="passenger.get('mobile')?.hasError('pattern')">Numbers only, max 11 digits</mat-error>
+                                 <mat-error *ngIf="passenger.get('mobile')?.hasError('required')">Mobile is required</mat-error>
+                                 <mat-error *ngIf="passenger.get('mobile')?.hasError('pattern')">Numbers only, max 11 digits</mat-error>
                               </mat-form-field>
                               <mat-form-field appearance="outline">
                                 <mat-label>Email (for confirmation)</mat-label>
@@ -280,7 +282,7 @@ type WizardStep = 'trip' | 'seat' | 'passenger' | 'confirmation';
                               <dt>Bus</dt><dd>{{ ticket.busNumber }}</dd>
                               <dt>Seat</dt><dd>{{ ticket.seatNumber }}</dd>
                               <dt>Travel Date</dt><dd>{{ ticket.travelDate }}</dd>
-                              <dt>Departure</dt><dd>{{ ticket.departureTime?.slice(0, 5) }}</dd>
+                               <dt>Departure</dt><dd>{{ ticket.departureTime.slice(0, 5) }}</dd>
                               <dt>Fare</dt><dd>৳{{ ticket.fareAmount }}</dd>
                              </dl>
                              <div class="ticket-actions" style="margin-top: 12px;">

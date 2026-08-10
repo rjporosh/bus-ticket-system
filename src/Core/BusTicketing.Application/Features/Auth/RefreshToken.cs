@@ -64,12 +64,20 @@ public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, R
             return Result.Failure<AuthResponseDto>(Error.Unauthorized("Refresh token has expired."));
 
         if (!user.IsActive)
+        {
+            foreach (var token in user.RefreshTokens.Where(rt => rt.IsActive))
+                token.Revoke();
+            await _db.SaveChangesAsync(cancellationToken);
             return Result.Failure<AuthResponseDto>(Error.Forbidden("This account has been deactivated."));
+        }
 
         var newRefreshTokenValue = _jwtTokenService.GenerateRefreshToken();
         var newRefreshTokenExpiresAt = _dateTime.UtcNow.AddDays(_jwtSettings.RefreshTokenExpiryDays);
 
         existingToken.Revoke(newRefreshTokenValue);
+
+        foreach (var otherToken in user.RefreshTokens.Where(rt => rt != existingToken && rt.IsActive))
+            otherToken.Revoke();
 
         var newRefreshToken = RefreshToken.Create(user.Id, newRefreshTokenValue, newRefreshTokenExpiresAt);
         _db.RefreshTokens.Add(newRefreshToken);

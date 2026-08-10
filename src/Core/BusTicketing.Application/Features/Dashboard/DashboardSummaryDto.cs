@@ -39,7 +39,7 @@ public record RouteSalesDto(
     decimal TotalSales);
 
 /// <summary>
-/// Per-bus/trip breakdown: bus number, route, departure time, available & total seats.
+/// Per-bus/trip breakdown: bus number, route, departure time, available &amp; total seats.
 /// </summary>
 public record BusSeatStatusDto(
     string BusNumber,

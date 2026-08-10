@@ -140,7 +140,7 @@ export class LoginComponent {
       error: (error: HttpErrorResponse) => {
         this.submitting.set(false);
         const problem = error.error as ProblemDetails | undefined;
-        this.errorMessage.set(problem?.detail ?? problem?.title ?? 'Invalid username or password.');
+        this.errorMessage.set(problem?.title ?? problem?.detail ?? 'Invalid username or password.');
       },
     });
   }

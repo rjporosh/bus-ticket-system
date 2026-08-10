@@ -45,9 +45,9 @@ public class GetRevenueReportQueryHandler : IRequestHandler<GetRevenueReportQuer
         {
             var totalSeatsOnDate = await _db.Schedules
                 .Include(s => s.Bus)
-                .ThenInclude(b => b.SeatLayout)
+                .ThenInclude(b => b.SeatLayout!)
                 .Where(s => s.RunsOn(item.Date))
-                .SelectMany(s => s.Bus.SeatLayout.Seats)
+                .SelectMany(s => s.Bus.SeatLayout!.Seats)
                 .CountAsync(s => s.IsActive, cancellationToken);
 
             item.TotalSeatsAvailable = totalSeatsOnDate;

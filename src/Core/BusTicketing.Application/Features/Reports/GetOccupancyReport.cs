@@ -25,7 +25,7 @@ public class GetOccupancyReportQueryHandler : IRequestHandler<GetOccupancyReport
 
         var schedulesQuery = _db.Schedules
             .Include(s => s.Bus)
-            .ThenInclude(b => b.SeatLayout)
+            .ThenInclude(b => b.SeatLayout!)
             .ThenInclude(l => l.Seats)
             .Include(s => s.Route)
             .Where(s => s.RunsOn(from) && s.RunsOn(to))
@@ -47,7 +47,7 @@ public class GetOccupancyReportQueryHandler : IRequestHandler<GetOccupancyReport
 
             foreach (var date in travelDates)
             {
-                var totalSeats = schedule.Bus.SeatLayout.Seats.Count(s => s.IsActive);
+                var totalSeats = schedule.Bus.SeatLayout!.Seats.Count(s => s.IsActive);
                 var soldSeats = await _db.Tickets
                     .CountAsync(t => t.ScheduleId == schedule.Id && t.TravelDate == date && t.Status == TicketStatus.Sold, cancellationToken);
 

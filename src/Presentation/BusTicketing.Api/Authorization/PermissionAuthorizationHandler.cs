@@ -50,7 +50,7 @@ public class PermissionAuthorizationHandler : AuthorizationHandler<PermissionReq
                 context.Fail();
             }
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             context.Fail();
         }

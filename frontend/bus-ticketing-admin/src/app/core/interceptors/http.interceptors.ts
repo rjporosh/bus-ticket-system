@@ -50,7 +50,7 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
     catchError((error: unknown) => {
       if (error instanceof HttpErrorResponse && error.status !== 401) {
         const problem = error.error as ProblemDetails | undefined;
-        const message = problem?.detail ?? problem?.title ?? 'Something went wrong. Please try again.';
+        const message = problem?.title ?? problem?.detail ?? 'Something went wrong. Please try again.';
         toast.error(message);
       }
       return throwError(() => error);

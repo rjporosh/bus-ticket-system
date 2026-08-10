@@ -23,6 +23,7 @@ export class TranslateService implements OnDestroy {
   readonly loading = this._loading.asReadonly();
 
   constructor(private readonly http: HttpClient) {
+    this.loadLanguage(this._currentLanguage()).subscribe();
     effect(() => {
       const lang = this._currentLanguage();
       this.loadLanguage(lang).subscribe();

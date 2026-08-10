@@ -6,13 +6,14 @@
     <Nullable>enable</Nullable>
     <RootNamespace>BusTicketing.Infrastructure</RootNamespace>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <NoWarn>$(NoWarn);CS1591</NoWarn>
+    <NoWarn>$(NoWarn);CS1591;NU1603;NU1608;NU1903</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
     <!-- EF Core providers - only the one selected via Database:Provider configuration
          is actually used at runtime, but all four are referenced so the switch is a
          pure configuration change with no recompilation of provider code. -->
+    <PackageReference Include="MimeKit" Version="4.17.0" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.0" />
     <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="9.0.0" />
@@ -30,7 +31,7 @@
     <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="10.0.0" />
     <PackageReference Include="Serilog.AspNetCore" Version="9.0.0" />
     <PackageReference Include="QRCoder" Version="1.4.3" />
-    <PackageReference Include="MailKit" Version="4.7.1" />
+    <PackageReference Include="MailKit" Version="4.17.0" />
     <PackageReference Include="Twilio" Version="7.4.0" />
   </ItemGroup>
 
