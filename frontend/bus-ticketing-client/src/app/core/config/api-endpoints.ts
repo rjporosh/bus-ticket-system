@@ -21,6 +21,7 @@ export const API_ENDPOINTS = {
     myTickets: '/booking/my-tickets',
     cancel: (ticketId: string) => `/booking/tickets/${ticketId}/cancel`,
     qrCode: (ticketId: string) => `/booking/tickets/${ticketId}/qrcode`,
+    print: (ticketId: string) => `/booking/tickets/${ticketId}/print`,
   },
   release: {
     current: '/release/current',

@@ -54,6 +54,7 @@ export const API_ENDPOINTS = {
     sellTickets: '/booking/tickets/batch',
     cancelTicket: (ticketId: string) => `/booking/tickets/${ticketId}/cancel`,
     search: '/booking/tickets',
+    print: (ticketId: string) => `/booking/tickets/${ticketId}/print`,
   },
   payments: {
     list: '/payments',

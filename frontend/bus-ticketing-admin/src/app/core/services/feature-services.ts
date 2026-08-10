@@ -171,6 +171,9 @@ export class BookingService {
   search(query: QueryParams): Observable<PaginatedList<TicketDto>> {
     return this.api.get(API_ENDPOINTS.booking.search, query);
   }
+  printTicket(ticketId: string): Observable<Blob> {
+    return this.api.getBlob(API_ENDPOINTS.booking.print(ticketId));
+  }
   getPayments(query: QueryParams): Observable<PaginatedList<PaymentDto>> {
     return this.api.get(API_ENDPOINTS.payments.list, query);
   }

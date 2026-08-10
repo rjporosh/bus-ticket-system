@@ -26,4 +26,8 @@ export class TicketsService {
   getQrCode(ticketId: string): Observable<TicketQrCodeResponse> {
     return this.api.get(API_ENDPOINTS.tickets.qrCode(ticketId));
   }
+
+  printTicket(ticketId: string): Observable<Blob> {
+    return this.api.getBlob(API_ENDPOINTS.tickets.print(ticketId));
+  }
 }

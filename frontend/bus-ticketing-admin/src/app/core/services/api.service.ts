@@ -1,4 +1,4 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
@@ -40,5 +40,9 @@ export class ApiService {
 
   delete<T>(path: string): Observable<T> {
     return this.http.delete<T>(`${this.baseUrl}${path}`);
+  }
+
+  getBlob(path: string, query?: QueryParams): Observable<Blob> {
+    return this.http.get(`${this.baseUrl}${path}`, { params: buildParams(query), responseType: 'blob' });
   }
 }

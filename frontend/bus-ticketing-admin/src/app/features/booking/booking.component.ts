@@ -282,9 +282,12 @@ type WizardStep = 'trip' | 'seat' | 'passenger' | 'confirmation';
                               <dt>Travel Date</dt><dd>{{ ticket.travelDate }}</dd>
                               <dt>Departure</dt><dd>{{ ticket.departureTime?.slice(0, 5) }}</dd>
                               <dt>Fare</dt><dd>৳{{ ticket.fareAmount }}</dd>
-                            </dl>
-                          </div>
-                        }
+                             </dl>
+                             <div class="ticket-actions" style="margin-top: 12px;">
+                               <button mat-stroked-button color="primary" (click)="printTicket(ticket.id)">Print Ticket</button>
+                             </div>
+                           </div>
+                         }
                       </div>
                     }
                     <div class="actions-row">
@@ -348,6 +351,9 @@ type WizardStep = 'trip' | 'seat' | 'passenger' | 'confirmation';
                     <ng-container matColumnDef="actions">
                       <th mat-header-cell *matHeaderCellDef></th>
                       <td mat-cell *matCellDef="let t">
+                        <button mat-icon-button (click)="printTicket(t.id)" matTooltip="Print ticket" aria-label="Print ticket">
+                          <mat-icon>print</mat-icon>
+                        </button>
                         @if (t.status === 0) {
                           <button mat-icon-button (click)="openCancel(t)" matTooltip="Cancel ticket" aria-label="Cancel ticket">
                             <mat-icon>cancel</mat-icon>
@@ -768,8 +774,20 @@ export class BookingComponent {
     });
   }
 
-  printTicket(): void {
-    window.print();
+  printTicket(ticketId: string): void {
+    this.bookingService.printTicket(ticketId).subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        const win = window.open(url, '_blank');
+        if (win) {
+          win.addEventListener('load', () => URL.revokeObjectURL(url), { once: true });
+        } else {
+          this.toast.error('Pop-up blocked. Please allow pop-ups to print tickets.');
+          URL.revokeObjectURL(url);
+        }
+      },
+      error: () => this.toast.error('Could not load printable ticket. Please try again.'),
+    });
   }
 
   resetWizard(): void {

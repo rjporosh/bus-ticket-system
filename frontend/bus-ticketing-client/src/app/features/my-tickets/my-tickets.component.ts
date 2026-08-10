@@ -60,6 +60,7 @@ import { TicketDto, TicketStatusLabel } from '../../core/models/api-models';
             <div class="ticket-footer" *ngIf="ticket.status === 0 && !isDeparturePast(ticket)">
               <button mat-stroked-button color="warn" (click)="cancelTicket(ticket)">Cancel Ticket</button>
               <button mat-stroked-button color="primary" (click)="showQrCode(ticket)">Show QR</button>
+              <button mat-stroked-button color="accent" (click)="printTicket(ticket)">Print Ticket</button>
             </div>
             @if (isDeparturePast(ticket)) {
               <div class="ticket-footer">
@@ -187,6 +188,24 @@ export class MyTicketsComponent implements OnInit {
       },
       error: () => {
         this.toast.error('Could not cancel ticket. Please try again.');
+      },
+    });
+  }
+
+  printTicket(ticket: TicketDto): void {
+    this.ticketsService.printTicket(ticket.id).subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        const win = window.open(url, '_blank');
+        if (win) {
+          win.addEventListener('load', () => URL.revokeObjectURL(url), { once: true });
+        } else {
+          this.toast.error('Pop-up blocked. Please allow pop-ups to print tickets.');
+          URL.revokeObjectURL(url);
+        }
+      },
+      error: () => {
+        this.toast.error('Could not load printable ticket. Please try again.');
       },
     });
   }
