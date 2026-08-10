@@ -201,6 +201,10 @@ type WizardStep = 'trip' | 'seat' | 'passenger' | 'confirmation';
                                 <mat-error *ngIf="passenger.get('mobile')?.hasError('pattern')">Numbers only, max 11 digits</mat-error>
                               </mat-form-field>
                               <mat-form-field appearance="outline">
+                                <mat-label>Email (for confirmation)</mat-label>
+                                <input matInput type="email" formControlName="email" placeholder="passenger@example.com" />
+                              </mat-form-field>
+                              <mat-form-field appearance="outline">
                                 <mat-label>Gender</mat-label>
                                 <mat-select formControlName="gender">
                                   <mat-option value="Male">Male</mat-option>
@@ -581,6 +585,7 @@ export class BookingComponent {
       this.fb.nonNullable.group({
         name: ['', Validators.required],
         mobile: ['', [Validators.required, Validators.pattern('^[0-9]{0,11}$'), Validators.maxLength(11)]],
+        email: [''],
         gender: [''],
         age: [null as number | null],
         nid: [''],
@@ -740,6 +745,7 @@ export class BookingComponent {
           nidOrPassport: p.nid || undefined,
           gender: p.gender || undefined,
           age: p.age || undefined,
+          email: p.email || undefined,
         };
       }),
       remarks: value.remarks || undefined,

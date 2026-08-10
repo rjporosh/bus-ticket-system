@@ -1,5 +1,77 @@
 # Release Notes
 
+## Version: 1.1.0
+**Release Date:** 10-08-2026
+**Phase:** Phase 6 — Customer Experience & Business Intelligence
+
+---
+
+## Features Built
+
+### Milestone 10 — Advanced Reporting & Analytics
+- **Backend:** New `ReportsController` with three Admin-only endpoints:
+  - `GET /api/v1/reports/revenue` — daily revenue summary with occupancy rate, optional route filter
+  - `GET /api/v1/reports/occupancy` — per-trip occupancy breakdown with revenue
+  - `GET /api/v1/reports/top-routes` — top routes ranked by ticket volume and revenue
+- **DTOs:** `RevenueReportDto`, `OccupancyReportDto`, `TopRouteDto`
+- All endpoints support optional `fromDate`, `toDate`, and `routeId` query parameters
+
+### Milestone 9 — Email Notifications
+- **Backend:** `IEmailService` abstraction with `SmtpEmailService` implementation using MailKit
+- **Backend:** `EmailSettings` model added to `appsettings.json` (SMTP host, port, credentials, SSL toggle)
+- **Backend:** `SellTicketCommand` and `SellTicketsCommand` extended with optional `Email` field
+- **Backend:** Booking confirmation emails sent asynchronously after transaction commits (non-blocking)
+- **Email content:** Passenger name, ticket number, route, bus, date, departure, seat, fare paid
+- **Frontend:** Both admin and client booking forms include optional email input field
+
+### Milestone 8 — QR Code Ticket Generation & Digital Ticket View
+- **Backend:** `IQrCodeService` + `QrCodeService` using QRCoder library generates PNG QR codes
+- **Backend:** `GetTicketQrCodeQuery` returns `TicketQrCodeDto` with base64 QR image and verification payload
+- **API:** `GET /api/v1/booking/tickets/{id}/qrcode` returns QR code data for authenticated users
+- **Client:** "My Tickets" page now has "Show QR" button that opens modal with QR code image
+- **QR payload** encodes ticket number, ID, bus number, seat, and travel date for boarding verification
+
+## Bugs Resolved
+
+| Bug | Resolution |
+|-----|-----------|
+| No digital ticket verification | Added QR code generation endpoint and client modal display |
+| No booking confirmation emails | Added async SMTP email service with MailKit, wired into sell commands |
+| No revenue or occupancy analytics | Added ReportsController with revenue, occupancy, and top-routes endpoints |
+
+## Breaking Changes
+
+**None.** All changes are additive:
+- QR code endpoint is new and optional
+- Email field is optional in booking forms and sell commands
+- Email sending is fire-and-forget; failures do not affect ticket sale results
+- New `/reports/*` endpoints are additive and Admin-only
+
+## Migration Notes
+
+### Database
+No new migration required. All changes are additive to existing tables or new API endpoints.
+
+### Frontend
+No breaking changes. New email and QR code fields are optional.
+
+### Configuration
+Add Email section to `appsettings.json`:
+```json
+"Email": {
+  "SmtpHost": "smtp.example.com",
+  "SmtpPort": 587,
+  "SmtpUsername": "",
+  "SmtpPassword": "",
+  "FromEmail": "noreply@busticketing.example",
+  "FromName": "Bus Ticketing System",
+  "EnableSsl": true,
+  "EnableNotifications": false
+}
+```
+
+---
+
 ## Version: 1.0.3
 **Release Date:** 10-08-2026
 **Phase:** Phase 5 — Admin Multi-Seat Booking + RealBus Last-Row Config + Age/Gender Display

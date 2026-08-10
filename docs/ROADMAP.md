@@ -52,3 +52,28 @@ Database artifacts, release tracking, configurable real-bus seat layout, Postman
 - Seat grid `gap` changed to `0`; aisle space driven by empty `visualCol` columns
 - Client same-for-all rewritten with explicit `@if` branches for reliable rendering
 - Added missing `MatCheckboxModule` import to client booking component
+
+## Phase 6: Customer Experience & Business Intelligence — ✅ delivered
+
+### Milestone 8 — QR Code Ticket Generation & Digital Ticket View
+- Backend: `IQrCodeService` + `QrCodeService` using QRCoder library generates PNG QR codes
+- Backend: `GetTicketQrCodeQuery` returns `TicketQrCodeDto` with base64 QR image and verification payload
+- API: `GET /api/v1/booking/tickets/{id}/qrcode` returns QR code data for authenticated users
+- Client: "My Tickets" page now has "Show QR" button that opens modal with QR code image
+- QR payload encodes ticket number, ID, bus number, seat, and travel date for verification
+
+### Milestone 9 — Email Notifications
+- Backend: `IEmailService` abstraction with `SmtpEmailService` implementation using MailKit
+- Backend: `EmailSettings` model added to `appsettings.json` with SMTP configuration
+- Backend: `SellTicketCommand` and `SellTicketsCommand` extended with optional `Email` field
+- Backend: Booking confirmation emails sent asynchronously after ticket sale commits
+- Email includes passenger name, ticket number, route, bus, date, departure, seat, and fare
+- Frontend: Both admin and client booking forms include optional email field
+
+### Milestone 10 — Advanced Reporting & Analytics
+- Backend: `ReportsController` with three endpoints (Admin-only):
+  - `GET /api/v1/reports/revenue` — daily revenue summary with occupancy rate
+  - `GET /api/v1/reports/occupancy` — per-trip occupancy breakdown
+  - `GET /api/v1/reports/top-routes` — top routes by ticket volume and revenue
+- DTOs: `RevenueReportDto`, `OccupancyReportDto`, `TopRouteDto`
+- All report endpoints support optional `fromDate`, `toDate`, and `routeId` filters

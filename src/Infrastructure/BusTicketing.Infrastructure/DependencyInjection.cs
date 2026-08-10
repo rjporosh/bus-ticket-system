@@ -20,6 +20,7 @@ public static class DependencyInjection
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
         services.Configure<JwtSettings>(configuration.GetSection(JwtSettings.SectionName));
+        services.Configure<EmailSettings>(configuration.GetSection(EmailSettings.SectionName));
 
         services.AddScoped<AuditableEntityInterceptor>();
         services.AddSingleton<QueryLoggingInterceptor>();
@@ -51,6 +52,8 @@ public static class DependencyInjection
         services.AddSingleton<IPasswordHasher, Pbkdf2PasswordHasher>();
         services.AddScoped<IJwtTokenService, JwtTokenService>();
         services.AddScoped<IAuditLogService, AuditLogService>();
+        services.AddScoped<IQrCodeService, QrCodeService>();
+        services.AddScoped<IEmailService, SmtpEmailService>();
 
         var jwtSettings = configuration.GetSection(JwtSettings.SectionName).Get<JwtSettings>()
             ?? throw new InvalidOperationException("Missing \"Jwt\" configuration section.");

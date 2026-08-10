@@ -24,7 +24,8 @@ public record SellTicketItem(
     PaymentMethod PaymentMethod,
     string? NidOrPassport = null,
     string? Gender = null,
-    int? Age = null);
+    int? Age = null,
+    string? Email = null);
 
 public class SellTicketsCommandValidator : AbstractValidator<SellTicketsCommand>
 {
@@ -41,6 +42,7 @@ public class SellTicketsCommandValidator : AbstractValidator<SellTicketsCommand>
             item.RuleFor(i => i.PassengerName).NotEmpty().MaximumLength(150);
             item.RuleFor(i => i.MobileNumber).NotEmpty().MaximumLength(20);
             item.RuleFor(i => i.FareAmount).GreaterThan(0);
+            item.RuleFor(i => i.Email).EmailAddress().When(i => !string.IsNullOrWhiteSpace(i.Email));
         });
     }
 }
@@ -51,14 +53,16 @@ public class SellTicketsCommandHandler : IRequestHandler<SellTicketsCommand, Res
     private readonly ICurrentUserService _currentUser;
     private readonly IDateTimeProvider _dateTime;
     private readonly IAuditLogService _auditLog;
+    private readonly IEmailService _emailService;
 
     public SellTicketsCommandHandler(
-        IApplicationDbContext db, ICurrentUserService currentUser, IDateTimeProvider dateTime, IAuditLogService auditLog)
+        IApplicationDbContext db, ICurrentUserService currentUser, IDateTimeProvider dateTime, IAuditLogService auditLog, IEmailService emailService)
     {
         _db = db;
         _currentUser = currentUser;
         _dateTime = dateTime;
         _auditLog = auditLog;
+        _emailService = emailService;
     }
 
     public async Task<Result<List<TicketDto>>> Handle(SellTicketsCommand request, CancellationToken cancellationToken)
@@ -160,6 +164,29 @@ public class SellTicketsCommandHandler : IRequestHandler<SellTicketsCommand, Res
                 ticket.FareAmount, ticket.Status, _currentUser.Username ?? "unknown", ticket.SoldAtUtc,
                 null, null, payment.Status, payment.TransactionRef));
         }
+
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                for (var i = 0; i < tickets.Count; i++)
+                {
+                    var item = request.Items[i];
+                    if (!string.IsNullOrWhiteSpace(item.Email))
+                    {
+                        await _emailService.SendBookingConfirmationAsync(
+                            item.Email, item.PassengerName, tickets[i].TicketNumber,
+                            schedule.Route.Name, schedule.Bus.Number, request.TravelDate,
+                            schedule.DepartureTime, seats[tickets[i].SeatId].SeatNumber,
+                            item.FareAmount);
+                    }
+                }
+            }
+            catch
+            {
+                // Email failures are non-critical; tickets are already sold.
+            }
+        }, CancellationToken.None);
 
         return Result.Success(resultDtos);
     }

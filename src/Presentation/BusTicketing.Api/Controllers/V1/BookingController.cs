@@ -81,6 +81,14 @@ public class BookingController : ControllerBase
     public async Task<ActionResult<PaginatedList<TicketDto>>> GetMyTickets(
         [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 20, CancellationToken cancellationToken = default)
         => Ok(await _sender.Send(new GetMyTicketsQuery(pageNumber, pageSize), cancellationToken));
+
+    /// <summary>Returns a QR code image for the specified ticket.</summary>
+    [HttpGet("tickets/{ticketId:guid}/qrcode")]
+    [Authorize(Policy = "Permission:BookingViewOwn")]
+    [ProducesResponseType(typeof(TicketQrCodeDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IResult> GetTicketQrCode(Guid ticketId, CancellationToken cancellationToken)
+        => (await _sender.Send(new GetTicketQrCodeQuery(ticketId), cancellationToken)).ToApiResult();
 }
 
 public record CancelTicketRequest(string Reason);

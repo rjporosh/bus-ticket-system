@@ -18,42 +18,69 @@ This is a Bus Ticketing System built with:
 | Phase 3 — Client-facing portal | ✅ Delivered |
 | Phase 4 — Production hardening + SQA enablement | ✅ Delivered |
 | Phase 5 — Admin multi-seat booking + RealBus last-row config + Age/Gender display | ✅ Delivered |
+| Phase 6 — Customer Experience & Business Intelligence | ✅ Delivered |
 
 ## Recommended Commit Message
 
 ```
-feat(booking): multi-seat batch selling, RealBus last-row config, age/gender capture
+feat(booking,reports,email,qr): Phase 6 — QR tickets, email notifications, advanced reporting
 
-Admin booking wizard now supports multi-seat selection (up to 10) with batch
-selling via SellTicketsRequest. Passenger FormArray with same-for-all toggle.
-RealBusConfig.LastRowConfig enables custom last-row seat counts. Ticket entity
-and DTOs now capture Age alongside Gender. Seat grids tightened with zero-gap
-CSS so aisle space is driven by empty visualCol columns only.
+Phase 6 delivers three customer-experience and business-intelligence milestones:
+QR code ticket generation with client-facing modal, async SMTP booking confirmation
+emails via MailKit, and admin-only revenue/occupancy/top-routes reporting endpoints.
 
 Backend:
-- Domain/Entities/Ticket.cs: added Age property
-- Domain/Entities/SeatLayout.cs: added RealBusConfig.LastRowConfig
-- Application/Features/Booking/SellTicket.cs: accept Age in command and DTO
-- Application/Features/Booking/SellTicketsCommand.cs: accept Age in SellTicketItem
-- Application/Features/Booking/GetAvailableSeats.cs: MapRealBusSeats honors LastRowConfig
-- Application/Features/SeatLayouts/SeatLayoutFeature.cs: visual mapping honors LastRowConfig
-- Persistence/Migrations/20260809194903_AddAgeToTickets.cs: new migration
-
-Frontend Admin:
-- features/booking/booking.component.ts: multi-seat wizard, FormArray, age field,
-  gender/age in confirmation, zero-gap seat grid
-- features/buses/buses.component.ts: last-row override UI in BusFormDialogComponent
+- Application/Common/Interfaces/IServiceInterfaces.cs: added IQrCodeService and IEmailService
+- Application/Common/Models/EmailSettings.cs: new SMTP configuration model
+- Application/Features/Booking/GetTicketQrCode.cs: new query + handler returning base64 QR
+- Application/Features/Booking/SellTicket.cs + SellTicketsCommand.cs: optional Email field,
+  async email confirmation fire-and-forget after transaction commit
+- Application/Features/Reports/ReportDtos.cs + GetRevenueReport.cs + GetOccupancyReport.cs
+  + GetTopRoutes.cs: three report DTOs and handlers
+- Infrastructure/Services/QrCodeService.cs: QRCoder-based PNG generation
+- Infrastructure/Services/SmtpEmailService.cs: MailKit SMTP implementation
+- Infrastructure/DependencyInjection.cs: registered QrCodeService and SmtpEmailService
+- Infrastructure/BusTicketing.Infrastructure.csproj: added QRCoder and MailKit packages
+- Presentation/Controllers/V1/ReportsController.cs: new admin-only reports endpoints
+- Presentation/BusTicketing.Api/appsettings.json: added Email configuration section
 
 Frontend Client:
-- features/booking/booking.component.ts: age field, same-for-all valueChanges
-  subscription, zero-gap seat grid
+- core/models/api-models.ts: added TicketQrCodeResponse and email in SellTicketItem
+- core/services/tickets.service.ts: added getQrCode() method
+- features/my-tickets/my-tickets.component.ts: QR code modal with base64 image display
+- features/booking/booking.component.ts: optional email field in passenger form
+- core/config/api-endpoints.ts: added tickets.qrCode endpoint
 
-Migration: dotnet ef database update --project src/Infrastructure/BusTicketing.Infrastructure --startup-project src/Presentation/BusTicketing.Api
+Frontend Admin:
+- features/booking/booking.component.ts: optional email field in passenger form, included in
+  sellTickets request payload
 ```
 
 ## What Was Completed This Session
 
-### 1. Admin Booking Wizard — Multi-Seat Selling (Milestone 7)
+### Phase 6 Milestone 8 — QR Code Ticket Generation & Digital Ticket View
+- **Backend:** `IQrCodeService` + `QrCodeService` using QRCoder library generates PNG QR codes
+- **Backend:** `GetTicketQrCodeQuery` returns `TicketQrCodeDto` with base64 QR image and verification payload
+- **API:** `GET /api/v1/booking/tickets/{id}/qrcode` returns QR code data for authenticated users
+- **Client:** "My Tickets" page now has "Show QR" button that opens modal with QR code image
+- **QR payload** encodes ticket number, ID, bus number, seat, and travel date for verification
+
+### Phase 6 Milestone 9 — Email Notifications
+- **Backend:** `IEmailService` abstraction with `SmtpEmailService` implementation using MailKit
+- **Backend:** `EmailSettings` model added to `appsettings.json` with SMTP configuration
+- **Backend:** `SellTicketCommand` and `SellTicketsCommand` extended with optional `Email` field
+- **Backend:** Booking confirmation emails sent asynchronously after ticket sale commits
+- **Frontend:** Both admin and client booking forms include optional email field
+
+### Phase 6 Milestone 10 — Advanced Reporting & Analytics
+- **Backend:** `ReportsController` with three endpoints (Admin-only):
+  - `GET /api/v1/reports/revenue` — daily revenue summary with occupancy rate
+  - `GET /api/v1/reports/occupancy` — per-trip occupancy breakdown
+  - `GET /api/v1/reports/top-routes` — top routes by ticket volume and revenue
+- **DTOs:** `RevenueReportDto`, `OccupancyReportDto`, `TopRouteDto`
+- All report endpoints support optional `fromDate`, `toDate`, and `routeId` filters
+
+### Phase 5 (Previous Session) — Admin Multi-Seat Booking + RealBus Last-Row Config + Age/Gender Display
 - **`frontend/bus-ticketing-admin/src/app/features/booking/booking.component.ts`**
   - Replaced singular `selectedSeat` with `selectedSeats` signal array (max 10)
   - Seat grid now uses RealBus `visualRow`/`visualCol` layout with `getGridTemplateColumns()`
@@ -99,24 +126,35 @@ Migration: dotnet ef database update --project src/Infrastructure/BusTicketing.I
 
 ## What Needs Next Agent Attention
 
-### Priority 1 — Postman Collection (Milestone 4)
+### Priority 1 — Phase 7 Definition
 
-Create `docs/postman-scripts/` with:
-- `BusTicketingSystem.postman_collection.json`
-- `environment.postman_environment.json`
-- `pre-request-scripts/` (auto-login per role)
-- `post-response-scripts/` (token extraction, validation)
+Define Phase 7 scope. Candidate themes:
+- **SMS Notifications:** Twilio or local GSM gateway integration for booking alerts
+- **Printable Tickets:** Server-rendered HTML ticket page with print stylesheet
+- **Offline Mode:** Service worker + IndexedDB for client portal offline search
+- **Multi-language:** i18n for admin and client portals
+- **Payment Gateway:** Replace mock payment with real processor (bKash, Nagad, card)
 
-### Priority 2 — Apply Database Migration
+### Priority 2 — Email Configuration
 
-Run the new migration against the database:
-```bash
-dotnet ef database update --project src/Infrastructure/BusTicketing.Infrastructure --startup-project src/Presentation/BusTicketing.Api
+Deploy with real SMTP credentials in `appsettings.json` or environment variables:
+```json
+"Email": {
+  "SmtpHost": "smtp.your-provider.com",
+  "SmtpPort": 587,
+  "SmtpUsername": "user",
+  "SmtpPassword": "pass",
+  "FromEmail": "noreply@yourdomain.com",
+  "EnableNotifications": true
+}
 ```
 
-### Priority 3 — Verify Last-Row Rendering
+### Priority 3 — Reports Frontend
 
-Test RealBus buses with `LastRowConfig` overrides (e.g., Left=1, Right=0 or Left=0, Right=1) to confirm the last row renders correctly in both admin and client seat grids.
+Build admin reports page with date range picker, route filter, and charts for:
+- Daily revenue trend
+- Occupancy heatmap
+- Top routes ranking
 
 ## Key File Paths
 

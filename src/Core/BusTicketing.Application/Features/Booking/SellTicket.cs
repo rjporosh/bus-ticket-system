@@ -20,7 +20,8 @@ public record SellTicketCommand(
     string? NidOrPassport = null,
     string? Gender = null,
     int? Age = null,
-    string? Remarks = null) : IRequest<Result<TicketDto>>;
+    string? Remarks = null,
+    string? Email = null) : IRequest<Result<TicketDto>>;
 
 public class SellTicketCommandValidator : AbstractValidator<SellTicketCommand>
 {
@@ -31,6 +32,7 @@ public class SellTicketCommandValidator : AbstractValidator<SellTicketCommand>
         RuleFor(x => x.PassengerName).NotEmpty().MaximumLength(150);
         RuleFor(x => x.MobileNumber).NotEmpty().MaximumLength(20);
         RuleFor(x => x.FareAmount).GreaterThan(0);
+        RuleFor(x => x.Email).EmailAddress().When(x => !string.IsNullOrWhiteSpace(x.Email));
     }
 }
 
@@ -49,14 +51,16 @@ public class SellTicketCommandHandler : IRequestHandler<SellTicketCommand, Resul
     private readonly ICurrentUserService _currentUser;
     private readonly IDateTimeProvider _dateTime;
     private readonly IAuditLogService _auditLog;
+    private readonly IEmailService _emailService;
 
     public SellTicketCommandHandler(
-        IApplicationDbContext db, ICurrentUserService currentUser, IDateTimeProvider dateTime, IAuditLogService auditLog)
+        IApplicationDbContext db, ICurrentUserService currentUser, IDateTimeProvider dateTime, IAuditLogService auditLog, IEmailService emailService)
     {
         _db = db;
         _currentUser = currentUser;
         _dateTime = dateTime;
         _auditLog = auditLog;
+        _emailService = emailService;
     }
 
     public async Task<Result<TicketDto>> Handle(SellTicketCommand request, CancellationToken cancellationToken)
@@ -127,6 +131,24 @@ public class SellTicketCommandHandler : IRequestHandler<SellTicketCommand, Resul
 
         await _auditLog.LogAsync("SellTicket", nameof(Ticket), ticket.Id.ToString(),
             $"Seat {seat.SeatNumber}, {request.PassengerName}, ৳{request.FareAmount}", cancellationToken);
+
+        if (!string.IsNullOrWhiteSpace(request.Email))
+        {
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await _emailService.SendBookingConfirmationAsync(
+                        request.Email, request.PassengerName, ticket.TicketNumber,
+                        schedule.Route.Name, schedule.Bus.Number, request.TravelDate,
+                        schedule.DepartureTime, seat.SeatNumber, request.FareAmount);
+                }
+                catch
+                {
+                    // Email failures are non-critical.
+                }
+            }, CancellationToken.None);
+        }
 
         return Result.Success(new TicketDto(
             ticket.Id, ticket.TicketNumber, schedule.Id, schedule.Bus.Number, schedule.Route.Name,

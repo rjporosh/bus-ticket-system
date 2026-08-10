@@ -109,6 +109,7 @@ export interface SellTicketItem {
   nidOrPassport?: string;
   gender?: string;
   age?: number;
+  email?: string;
 }
 
 export interface PaginatedList<T> {
@@ -174,4 +175,11 @@ export interface ProblemDetails {
   status?: number;
   detail?: string;
   errors?: Record<string, string[]>;
+}
+
+export interface TicketQrCodeResponse {
+  ticketId: string;
+  ticketNumber: string;
+  qrCodeBase64: string;
+  verificationPayload: string;
 }

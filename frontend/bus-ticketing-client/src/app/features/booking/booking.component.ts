@@ -88,20 +88,24 @@ import {
                       <input matInput formControlName="name" placeholder="As per ID">
                       <mat-error *ngIf="passengers.at(0).get('name')?.hasError('required')">Name is required</mat-error>
                     </mat-form-field>
-                    <mat-form-field appearance="outline" class="full-width">
-                      <mat-label>Mobile Number *</mat-label>
-                      <input matInput formControlName="mobile" placeholder="01XXXXXXXXX" maxlength="11">
-                      <mat-error *ngIf="passengers.at(0).get('mobile')?.hasError('required')">Mobile is required</mat-error>
-                      <mat-error *ngIf="passengers.at(0).get('mobile')?.hasError('pattern')">Numbers only, max 11 digits</mat-error>
-                    </mat-form-field>
-                    <mat-form-field appearance="outline" class="full-width">
-                      <mat-label>Gender</mat-label>
-                      <mat-select formControlName="gender">
-                        <mat-option value="Male">Male</mat-option>
-                        <mat-option value="Female">Female</mat-option>
-                        <mat-option value="Other">Other</mat-option>
-                      </mat-select>
-                    </mat-form-field>
+                     <mat-form-field appearance="outline" class="full-width">
+                       <mat-label>Mobile Number *</mat-label>
+                       <input matInput formControlName="mobile" placeholder="01XXXXXXXXX" maxlength="11">
+                       <mat-error *ngIf="passengers.at(0).get('mobile')?.hasError('required')">Mobile is required</mat-error>
+                       <mat-error *ngIf="passengers.at(0).get('mobile')?.hasError('pattern')">Numbers only, max 11 digits</mat-error>
+                     </mat-form-field>
+                     <mat-form-field appearance="outline" class="full-width">
+                       <mat-label>Email (optional)</mat-label>
+                       <input matInput type="email" formControlName="email" placeholder="passenger@example.com">
+                     </mat-form-field>
+                     <mat-form-field appearance="outline" class="full-width">
+                       <mat-label>Gender</mat-label>
+                       <mat-select formControlName="gender">
+                         <mat-option value="Male">Male</mat-option>
+                         <mat-option value="Female">Female</mat-option>
+                         <mat-option value="Other">Other</mat-option>
+                       </mat-select>
+                     </mat-form-field>
                     <mat-form-field appearance="outline" class="full-width">
                       <mat-label>Age</mat-label>
                       <input matInput type="number" formControlName="age" min="0" max="120" />
@@ -126,20 +130,24 @@ import {
                         <input matInput formControlName="name" placeholder="As per ID">
                         <mat-error *ngIf="passenger.get('name')?.hasError('required')">Name is required</mat-error>
                       </mat-form-field>
-                      <mat-form-field appearance="outline" class="full-width">
-                        <mat-label>Mobile Number *</mat-label>
-                        <input matInput formControlName="mobile" placeholder="01XXXXXXXXX" maxlength="11">
-                        <mat-error *ngIf="passenger.get('mobile')?.hasError('required')">Mobile is required</mat-error>
-                        <mat-error *ngIf="passenger.get('mobile')?.hasError('pattern')">Numbers only, max 11 digits</mat-error>
-                      </mat-form-field>
-                      <mat-form-field appearance="outline" class="full-width">
-                        <mat-label>Gender</mat-label>
-                        <mat-select formControlName="gender">
-                          <mat-option value="Male">Male</mat-option>
-                          <mat-option value="Female">Female</mat-option>
-                          <mat-option value="Other">Other</mat-option>
-                        </mat-select>
-                      </mat-form-field>
+                       <mat-form-field appearance="outline" class="full-width">
+                         <mat-label>Mobile Number *</mat-label>
+                         <input matInput formControlName="mobile" placeholder="01XXXXXXXXX" maxlength="11">
+                         <mat-error *ngIf="passenger.get('mobile')?.hasError('required')">Mobile is required</mat-error>
+                         <mat-error *ngIf="passenger.get('mobile')?.hasError('pattern')">Numbers only, max 11 digits</mat-error>
+                       </mat-form-field>
+                       <mat-form-field appearance="outline" class="full-width">
+                         <mat-label>Email (optional)</mat-label>
+                         <input matInput type="email" formControlName="email" placeholder="passenger@example.com">
+                       </mat-form-field>
+                       <mat-form-field appearance="outline" class="full-width">
+                         <mat-label>Gender</mat-label>
+                         <mat-select formControlName="gender">
+                           <mat-option value="Male">Male</mat-option>
+                           <mat-option value="Female">Female</mat-option>
+                           <mat-option value="Other">Other</mat-option>
+                         </mat-select>
+                       </mat-form-field>
                       <mat-form-field appearance="outline" class="full-width">
                         <mat-label>Age</mat-label>
                         <input matInput type="number" formControlName="age" min="0" max="120" />
@@ -329,6 +337,7 @@ export class BookingComponent implements OnInit {
         this.fb.nonNullable.group({
           name: ['', Validators.required],
           mobile: ['', [Validators.required, Validators.pattern('^[0-9]{0,11}$'), Validators.maxLength(11)]],
+          email: [''],
           gender: [''],
           age: [null as number | null],
           nid: [''],
@@ -499,6 +508,7 @@ export class BookingComponent implements OnInit {
           nidOrPassport: p.nid || undefined,
           gender: p.gender || undefined,
           age: p.age || undefined,
+          email: p.email || undefined,
         };
       }),
       remarks: value.remarks || undefined,

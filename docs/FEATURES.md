@@ -72,8 +72,22 @@ public surface has a different threat model than an internal tool).
 | Passenger gender on seat map | ✅ | Sold seats show initials and ♂/♀ symbols, color-coded blue/pink |
 | Booking flow | ✅ | Passenger details + fare calculation + per-seat data submission |
 | My Tickets | ✅ | View and cancel bookings |
+| QR Code Ticket View | ✅ | My Tickets page shows QR code modal for each ticket |
+| Email confirmation | ✅ | Optional email field; booking confirmation sent via SMTP |
 | Login | ✅ | Optional auth for returning customers |
 | Docker + nginx | ✅ | Multi-stage build with SPA fallback |
+
+## Phase 6: Customer Experience & Business Intelligence
+
+| Requirement | Status | Notes |
+|---|---|---|
+| QR Code Ticket Generation | ✅ | QRCoder-based PNG generation; endpoint `GET /api/v1/booking/tickets/{id}/qrcode` |
+| Digital Ticket View (Client) | ✅ | QR code modal on My Tickets page with base64 image display |
+| Email Notifications | ✅ | MailKit SMTP; async fire-and-forget after ticket sale; configurable via appsettings |
+| Revenue Reporting | ✅ | `GET /api/v1/reports/revenue` with daily breakdown and occupancy rate |
+| Occupancy Reporting | ✅ | `GET /api/v1/reports/occupancy` with per-trip seat utilization |
+| Top Routes Reporting | ✅ | `GET /api/v1/reports/top-routes` ranked by volume and revenue |
+| Admin-only Reports | ✅ | All report endpoints restricted to Admin role |
 
 ## Frontend requirements
 

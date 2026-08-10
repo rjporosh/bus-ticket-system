@@ -4,14 +4,15 @@ import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { TicketsService } from '../../core/services/tickets.service';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { TicketsService, TicketQrCodeResponse } from '../../core/services/tickets.service';
 import { ToastService } from '../../core/services/toast.service';
 import { TicketDto, TicketStatusLabel } from '../../core/models/api-models';
 
 @Component({
   selector: 'app-my-tickets',
   standalone: true,
-  imports: [CommonModule, RouterLink, MatButtonModule, MatProgressSpinnerModule, MatSnackBarModule],
+  imports: [CommonModule, RouterLink, MatButtonModule, MatProgressSpinnerModule, MatSnackBarModule, MatDialogModule],
   template: `
     <div class="my-tickets-container">
       <h2>My Tickets</h2>
@@ -58,6 +59,7 @@ import { TicketDto, TicketStatusLabel } from '../../core/models/api-models';
             </div>
             <div class="ticket-footer" *ngIf="ticket.status === 0 && !isDeparturePast(ticket)">
               <button mat-stroked-button color="warn" (click)="cancelTicket(ticket)">Cancel Ticket</button>
+              <button mat-stroked-button color="primary" (click)="showQrCode(ticket)">Show QR</button>
             </div>
             @if (isDeparturePast(ticket)) {
               <div class="ticket-footer">
@@ -75,6 +77,18 @@ import { TicketDto, TicketStatusLabel } from '../../core/models/api-models';
         </ng-template>
       }
     </div>
+
+    @if (qrData()) {
+      <div class="qr-overlay" (click)="closeQr()">
+        <div class="qr-modal" (click)="$event.stopPropagation()">
+          <h3>Ticket QR Code</h3>
+          <p class="qr-ticket-number">{{ qrData()?.ticketNumber }}</p>
+          <img [src]="'data:image/png;base64,' + qrData()?.qrCodeBase64" alt="QR Code" class="qr-image" />
+          <p class="qr-hint">Show this at boarding</p>
+          <button mat-raised-button color="primary" (click)="closeQr()">Close</button>
+        </div>
+      </div>
+    }
   `,
   styles: [`
     .my-tickets-container { max-width: 900px; margin: 0 auto; padding: 2rem; }
@@ -98,12 +112,19 @@ import { TicketDto, TicketStatusLabel } from '../../core/models/api-models';
     .detail-row.total .price { color: #1a73e8; }
     .label { color: #666; }
     .value { color: #333; }
-    .ticket-footer { padding: 1rem 1.5rem; border-top: 1px solid #eee; display: flex; justify-content: flex-end; }
+    .ticket-footer { padding: 1rem 1.5rem; border-top: 1px solid #eee; display: flex; justify-content: flex-end; gap: 0.5rem; }
     .departed-note { color: #c62828; font-size: 0.875rem; font-weight: 600; }
     .empty-state { text-align: center; padding: 4rem 2rem; }
     .empty-state p { color: #666; margin-bottom: 1.5rem; }
+    .qr-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+    .qr-modal { background: white; border-radius: 12px; padding: 2rem; text-align: center; max-width: 360px; width: 90%; }
+    .qr-modal h3 { margin: 0 0 0.5rem; color: #333; }
+    .qr-ticket-number { color: #666; margin: 0 0 1rem; font-weight: 600; }
+    .qr-image { width: 200px; height: 200px; display: block; margin: 0 auto 1rem; }
+    .qr-hint { color: #888; font-size: 0.875rem; margin: 0 0 1rem; }
     @media (max-width: 768px) {
       .ticket-header { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+      .ticket-footer { flex-direction: column; }
     }
   `]
 })
@@ -112,11 +133,13 @@ export class MyTicketsComponent implements OnInit {
   protected readonly loading = signal(false);
   protected readonly cancelling = signal<TicketDto | null>(null);
   protected readonly cancelReason = signal('');
+  protected readonly qrData = signal<TicketQrCodeResponse | null>(null);
 
   constructor(
     private ticketsService: TicketsService,
     private toast: ToastService,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private dialog: MatDialog
   ) {}
 
   ngOnInit(): void {
@@ -141,6 +164,17 @@ export class MyTicketsComponent implements OnInit {
     const now = new Date();
     const departure = new Date(`${ticket.travelDate}T${ticket.departureTime}`);
     return now > departure && ticket.status === 0;
+  }
+
+  showQrCode(ticket: TicketDto): void {
+    this.ticketsService.getQrCode(ticket.id).subscribe({
+      next: (data) => this.qrData.set(data),
+      error: () => this.toast.error('Could not load QR code. Please try again.'),
+    });
+  }
+
+  closeQr(): void {
+    this.qrData.set(null);
   }
 
   cancelTicket(ticket: TicketDto): void {

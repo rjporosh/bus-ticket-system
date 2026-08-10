@@ -39,3 +39,15 @@ public interface IAuditLogService
 {
     Task LogAsync(string action, string entityName, string entityId, string? details = null, CancellationToken cancellationToken = default);
 }
+
+/// <summary>Generates QR code images for tickets and other verifiable entities.</summary>
+public interface IQrCodeService
+{
+    Task<byte[]> GeneratePngAsync(string payload, CancellationToken cancellationToken = default);
+}
+
+/// <summary>Sends transactional emails such as booking confirmations.</summary>
+public interface IEmailService
+{
+    Task SendBookingConfirmationAsync(string toEmail, string passengerName, string ticketNumber, string routeName, string busNumber, DateOnly travelDate, TimeOnly departureTime, string seatNumber, decimal fareAmount, CancellationToken cancellationToken = default);
+}
