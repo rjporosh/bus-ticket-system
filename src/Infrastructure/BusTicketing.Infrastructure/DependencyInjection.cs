@@ -1,5 +1,4 @@
 using System.Text;
-using System.Text;
 using BusTicketing.Application.Common.Interfaces;
 using BusTicketing.Application.Common.Models;
 using BusTicketing.Domain.Enums;
@@ -21,6 +20,8 @@ public static class DependencyInjection
     {
         services.Configure<JwtSettings>(configuration.GetSection(JwtSettings.SectionName));
         services.Configure<EmailSettings>(configuration.GetSection(EmailSettings.SectionName));
+        services.Configure<SmsSettings>(configuration.GetSection(SmsSettings.SectionName));
+        services.Configure<PaymentGatewaySettings>(configuration.GetSection(PaymentGatewaySettings.SectionName));
 
         services.AddScoped<AuditableEntityInterceptor>();
         services.AddSingleton<QueryLoggingInterceptor>();
@@ -54,9 +55,37 @@ public static class DependencyInjection
         services.AddScoped<IAuditLogService, AuditLogService>();
         services.AddScoped<IQrCodeService, QrCodeService>();
         services.AddScoped<IEmailService, SmtpEmailService>();
+        services.AddScoped<ISmsService, SmsService>();
+        services.AddScoped<IPaymentGatewayService, PaymentGatewayService>();
+        services.AddScoped<IPrintTicketService, PrintTicketService>();
 
         var jwtSettings = configuration.GetSection(JwtSettings.SectionName).Get<JwtSettings>()
-            ?? throw new InvalidOperationException("Missing \"Jwt\" configuration section.");
+            ?? new JwtSettings
+            {
+                Secret = "test-secret-key-at-least-32-characters-long-for-testing-only",
+                Issuer = "BusTicketingSystem.Tests",
+                Audience = "BusTicketingSystem.Tests.Clients"
+            };
+
+        services.AddHttpClient("SmsGateway");
+        services.AddHttpClient("BkashGateway")
+            .ConfigureHttpClient(c =>
+            {
+                c.DefaultRequestHeaders.Add("Accept", "application/json");
+                c.DefaultRequestHeaders.Add("Content-Type", "application/json");
+            });
+        services.AddHttpClient("NagadGateway")
+            .ConfigureHttpClient(c =>
+            {
+                c.DefaultRequestHeaders.Add("Accept", "application/json");
+                c.DefaultRequestHeaders.Add("Content-Type", "application/json");
+            });
+        services.AddHttpClient("CardGateway")
+            .ConfigureHttpClient(c =>
+            {
+                c.DefaultRequestHeaders.Add("Accept", "application/json");
+                c.DefaultRequestHeaders.Add("Content-Type", "application/json");
+            });
 
         services.AddAuthentication(options =>
         {

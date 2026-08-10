@@ -19,7 +19,7 @@ Log.Logger = new LoggerConfiguration()
     .Enrich.FromLogContext()
     .Enrich.WithEnvironmentName()
     .WriteTo.Console()
-    .CreateBootstrapLogger();
+    .CreateLogger();
 
 ICustomLogger? customLogger = null;
 
@@ -27,12 +27,10 @@ try
 {
     var builder = WebApplication.CreateBuilder(args);
 
-    // ---- Custom Logging Setup -------------------------------------------
     var logsRootPath = Path.Combine(builder.Environment.ContentRootPath, "logs");
     customLogger = new CustomLogger(logsRootPath);
     builder.Services.AddSingleton<ICustomLogger>(customLogger);
 
-    // ---- Serilog Configuration -------------------------------------------
     builder.Host.UseSerilog((context, services, configuration) => configuration
         .ReadFrom.Configuration(context.Configuration)
         .ReadFrom.Services(services)
@@ -44,7 +42,6 @@ try
             rollingInterval: RollingInterval.Day,
             retainedFileCountLimit: 30));
 
-    // ---- Services -------------------------------------------------------
     builder.Services.AddApplication();
     builder.Services.AddInfrastructure(builder.Configuration);
 
@@ -92,7 +89,6 @@ try
 
     var app = builder.Build();
 
-    // ---- Pipeline ---------------------------------------------------------
     app.UseSerilogRequestLogging();
     app.UseMiddleware<GlobalExceptionMiddleware>();
     app.UseMiddleware<RateLimitMiddleware>();
@@ -132,14 +128,13 @@ try
         ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
     });
 
-    // ---- Startup data seed (idempotent; controlled by config) -------------
     if (builder.Configuration.GetValue("SeedData:Enabled", true))
     {
         using var scope = app.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var hasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher>();
         var seedLogger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-        await DataSeeder.SeedAsync(db, hasher, seedLogger);
+        DataSeeder.SeedAsync(db, hasher, seedLogger).GetAwaiter().GetResult();
     }
 
     Log.Information("Bus Ticketing System API starting up");
@@ -158,7 +153,6 @@ finally
     Log.CloseAndFlush();
 }
 
-// ---- Graceful Shutdown Handlers -----------------------------------------
 if (customLogger != null)
 {
     AppDomain.CurrentDomain.UnhandledException += (sender, e) =>
