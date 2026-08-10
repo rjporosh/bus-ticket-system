@@ -18,5 +18,8 @@ public enum PaymentMethod
 {
     Cash = 0,
     MockCard = 1,
-    MockMobileBanking = 2
+    MockMobileBanking = 2,
+    Bkash = 3,
+    Nagad = 4,
+    Card = 5
 }

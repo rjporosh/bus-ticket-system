@@ -75,11 +75,13 @@ public class CapturePaymentCommandHandler : IRequestHandler<CapturePaymentComman
 {
     private readonly IApplicationDbContext _db;
     private readonly IDateTimeProvider _dateTime;
+    private readonly IPaymentGatewayService _paymentGateway;
 
-    public CapturePaymentCommandHandler(IApplicationDbContext db, IDateTimeProvider dateTime)
+    public CapturePaymentCommandHandler(IApplicationDbContext db, IDateTimeProvider dateTime, IPaymentGatewayService paymentGateway)
     {
         _db = db;
         _dateTime = dateTime;
+        _paymentGateway = paymentGateway;
     }
 
     public async Task<Result<PaymentDto>> Handle(CapturePaymentCommand request, CancellationToken cancellationToken)
@@ -93,7 +95,26 @@ public class CapturePaymentCommandHandler : IRequestHandler<CapturePaymentComman
 
         try
         {
-            payment.Capture(_dateTime.UtcNow);
+            if (payment.Method is PaymentMethod.Cash)
+            {
+                payment.Capture(_dateTime.UtcNow);
+            }
+            else
+            {
+                var gatewayResult = await _paymentGateway.QueryPaymentAsync(payment.TransactionRef, cancellationToken);
+                if (gatewayResult.IsSuccess && (gatewayResult.Status == "Captured" || gatewayResult.Status == "succeeded"))
+                {
+                    payment.Capture(_dateTime.UtcNow);
+                }
+                else if (!string.IsNullOrEmpty(gatewayResult.FailureReason))
+                {
+                    payment.Fail(gatewayResult.FailureReason, _dateTime.UtcNow);
+                }
+                else
+                {
+                    return Result.Failure<PaymentDto>(Error.Conflict("Payment is not yet confirmed by the gateway."));
+                }
+            }
         }
         catch (BusinessRuleViolationException ex)
         {
@@ -114,11 +135,13 @@ public class RefundPaymentCommandHandler : IRequestHandler<RefundPaymentCommand,
 {
     private readonly IApplicationDbContext _db;
     private readonly IDateTimeProvider _dateTime;
+    private readonly IPaymentGatewayService _paymentGateway;
 
-    public RefundPaymentCommandHandler(IApplicationDbContext db, IDateTimeProvider dateTime)
+    public RefundPaymentCommandHandler(IApplicationDbContext db, IDateTimeProvider dateTime, IPaymentGatewayService paymentGateway)
     {
         _db = db;
         _dateTime = dateTime;
+        _paymentGateway = paymentGateway;
     }
 
     public async Task<Result<PaymentDto>> Handle(RefundPaymentCommand request, CancellationToken cancellationToken)
@@ -132,7 +155,22 @@ public class RefundPaymentCommandHandler : IRequestHandler<RefundPaymentCommand,
 
         try
         {
-            payment.Refund(_dateTime.UtcNow);
+            if (payment.Method is PaymentMethod.Cash)
+            {
+                payment.Refund(_dateTime.UtcNow);
+            }
+            else
+            {
+                var gatewayResult = await _paymentGateway.RefundAsync(payment.TransactionRef, payment.Amount, cancellationToken);
+                if (gatewayResult.IsSuccess)
+                {
+                    payment.Refund(_dateTime.UtcNow);
+                }
+                else
+                {
+                    return Result.Failure<PaymentDto>(Error.Conflict(gatewayResult.FailureReason ?? "Refund failed at gateway."));
+                }
+            }
         }
         catch (BusinessRuleViolationException ex)
         {
@@ -153,11 +191,13 @@ public class FailPaymentCommandHandler : IRequestHandler<FailPaymentCommand, Res
 {
     private readonly IApplicationDbContext _db;
     private readonly IDateTimeProvider _dateTime;
+    private readonly IPaymentGatewayService _paymentGateway;
 
-    public FailPaymentCommandHandler(IApplicationDbContext db, IDateTimeProvider dateTime)
+    public FailPaymentCommandHandler(IApplicationDbContext db, IDateTimeProvider dateTime, IPaymentGatewayService paymentGateway)
     {
         _db = db;
         _dateTime = dateTime;
+        _paymentGateway = paymentGateway;
     }
 
     public async Task<Result<PaymentDto>> Handle(FailPaymentCommand request, CancellationToken cancellationToken)
@@ -171,7 +211,22 @@ public class FailPaymentCommandHandler : IRequestHandler<FailPaymentCommand, Res
 
         try
         {
-            payment.Fail(request.Reason, _dateTime.UtcNow);
+            if (payment.Method is PaymentMethod.Cash)
+            {
+                payment.Fail(request.Reason, _dateTime.UtcNow);
+            }
+            else
+            {
+                var gatewayResult = await _paymentGateway.CancelAsync(payment.TransactionRef, cancellationToken);
+                if (gatewayResult.IsSuccess)
+                {
+                    payment.Fail(request.Reason, _dateTime.UtcNow);
+                }
+                else
+                {
+                    return Result.Failure<PaymentDto>(Error.Conflict(gatewayResult.FailureReason ?? "Cancel failed at gateway."));
+                }
+            }
         }
         catch (BusinessRuleViolationException ex)
         {

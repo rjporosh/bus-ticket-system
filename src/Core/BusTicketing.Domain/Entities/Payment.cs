@@ -69,4 +69,12 @@ public class Payment : BaseEntity
         Status = PaymentStatus.Refunded;
         ProcessedAtUtc = processedAtUtc;
     }
+
+    public void UpdateTransactionRef(string transactionRef)
+    {
+        if (string.IsNullOrWhiteSpace(transactionRef))
+            throw new DomainException("Transaction reference is required.");
+
+        TransactionRef = transactionRef;
+    }
 }

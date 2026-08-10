@@ -89,6 +89,20 @@ public class BookingController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IResult> GetTicketQrCode(Guid ticketId, CancellationToken cancellationToken)
         => (await _sender.Send(new GetTicketQrCodeQuery(ticketId), cancellationToken)).ToApiResult();
+
+    /// <summary>Returns a printable HTML page for the specified ticket.</summary>
+    [HttpGet("tickets/{ticketId:guid}/print")]
+    [Authorize(Policy = "Permission:BookingViewOwn")]
+    [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IResult> GetTicketPrint(Guid ticketId, CancellationToken cancellationToken)
+    {
+        var result = await _sender.Send(new GetTicketPrintQuery(ticketId), cancellationToken);
+        if (result.IsFailure)
+            return result.ToApiResult();
+
+        return Results.Content(result.Value.PrintableHtml, "text/html");
+    }
 }
 
 public record CancelTicketRequest(string Reason);

@@ -53,3 +53,24 @@ public record DashboardSummaryDto(
 public record RouteSalesDto(string RouteName, int SoldTickets, int AvailableSeats, decimal TotalSales);
 
 public record BusSeatStatusDto(string BusNumber, string RouteName, TimeOnly DepartureTime, int AvailableSeats, int TotalSeats);
+
+public record PrintTicketDto(
+    Guid TicketId,
+    string TicketNumber,
+    string BusNumber,
+    string RouteName,
+    string SeatNumber,
+    DateOnly TravelDate,
+    TimeOnly DepartureTime,
+    string PassengerName,
+    string MobileNumber,
+    string? NidOrPassport,
+    string? Gender,
+    int? Age,
+    decimal FareAmount,
+    TicketStatus Status,
+    string SoldByUsername,
+    DateTimeOffset SoldAtUtc,
+    string? CancellationReason,
+    DateTimeOffset? CancelledAtUtc,
+    string PrintableHtml);

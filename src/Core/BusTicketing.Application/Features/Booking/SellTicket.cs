@@ -36,15 +36,6 @@ public class SellTicketCommandValidator : AbstractValidator<SellTicketCommand>
     }
 }
 
-/// <summary>
-/// Sells a ticket end-to-end: validates the trip runs on the requested date, validates
-/// the seat belongs to that bus and is in service, prevents double-booking with both an
-/// application-level pre-check and a DB unique-index backstop (a race between two booth
-/// staff selling the same seat within milliseconds is caught by the index even if the
-/// pre-check both requests observed passed), and captures a mock payment — all inside one
-/// transaction, so a ticket is never left sold without a corresponding payment record or
-/// vice versa.
-/// </summary>
 public class SellTicketCommandHandler : IRequestHandler<SellTicketCommand, Result<TicketDto>>
 {
     private readonly IApplicationDbContext _db;
@@ -52,15 +43,19 @@ public class SellTicketCommandHandler : IRequestHandler<SellTicketCommand, Resul
     private readonly IDateTimeProvider _dateTime;
     private readonly IAuditLogService _auditLog;
     private readonly IEmailService _emailService;
+    private readonly ISmsService _smsService;
+    private readonly IPaymentGatewayService _paymentGateway;
 
     public SellTicketCommandHandler(
-        IApplicationDbContext db, ICurrentUserService currentUser, IDateTimeProvider dateTime, IAuditLogService auditLog, IEmailService emailService)
+        IApplicationDbContext db, ICurrentUserService currentUser, IDateTimeProvider dateTime, IAuditLogService auditLog, IEmailService emailService, ISmsService smsService, IPaymentGatewayService paymentGateway)
     {
         _db = db;
         _currentUser = currentUser;
         _dateTime = dateTime;
         _auditLog = auditLog;
         _emailService = emailService;
+        _smsService = smsService;
+        _paymentGateway = paymentGateway;
     }
 
     public async Task<Result<TicketDto>> Handle(SellTicketCommand request, CancellationToken cancellationToken)
@@ -89,9 +84,6 @@ public class SellTicketCommandHandler : IRequestHandler<SellTicketCommand, Resul
                 ["seatId"] = new[] { "This seat does not belong to the scheduled bus." }
             }));
 
-        // Application-level pre-check. The unique index on (ScheduleId, TravelDate, SeatId)
-        // filtered to Status = Sold is the authoritative backstop for the race condition
-        // this check alone cannot fully close — see DATABASE.md.
         var alreadySold = await _db.Tickets.AnyAsync(t =>
             t.ScheduleId == request.ScheduleId &&
             t.TravelDate == request.TravelDate &&
@@ -111,20 +103,47 @@ public class SellTicketCommandHandler : IRequestHandler<SellTicketCommand, Resul
             _currentUser.UserId ?? Guid.Empty, now,
             request.NidOrPassport, request.Gender, request.Age, request.Remarks);
 
-        var payment = Payment.CreatePending(ticket.Id, request.FareAmount, request.PaymentMethod, $"MOCK-{ticketNumber}");
-        payment.Capture(now); // mock gateway: always succeeds synchronously
+        var paymentTransactionRef = $"MOCK-{ticketNumber}";
+        Payment payment;
 
         await using var transaction = await _db.BeginTransactionAsync(cancellationToken);
         try
         {
             _db.Tickets.Add(ticket);
+            await _db.SaveChangesAsync(cancellationToken);
+
+            payment = Payment.CreatePending(ticket.Id, request.FareAmount, request.PaymentMethod, paymentTransactionRef);
+
+            if (request.PaymentMethod is PaymentMethod.Cash)
+            {
+                payment.Capture(now);
+            }
+            else
+            {
+                var gatewayResult = await _paymentGateway.CreatePaymentAsync(ticket.Id, request.FareAmount, request.PaymentMethod, request.MobileNumber, cancellationToken);
+
+                if (gatewayResult.IsSuccess)
+                {
+                    paymentTransactionRef = gatewayResult.TransactionRef;
+                    payment.UpdateTransactionRef(paymentTransactionRef);
+
+                    if (gatewayResult.Status == "Captured" || gatewayResult.Status == "succeeded")
+                    {
+                        payment.Capture(now);
+                    }
+                }
+                else if (!string.IsNullOrEmpty(gatewayResult.FailureReason))
+                {
+                    payment.Fail(gatewayResult.FailureReason, now);
+                }
+            }
+
             _db.Payments.Add(payment);
             await _db.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
         }
         catch (DbUpdateException)
         {
-            // Unique index violation: another request won the race for this exact seat.
             await transaction.RollbackAsync(cancellationToken);
             return Result.Failure<TicketDto>(Error.Conflict($"Seat {seat.SeatNumber} was just sold by another request. Please choose a different seat."));
         }
@@ -145,7 +164,36 @@ public class SellTicketCommandHandler : IRequestHandler<SellTicketCommand, Resul
                 }
                 catch
                 {
-                    // Email failures are non-critical.
+                }
+            }, CancellationToken.None);
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.MobileNumber))
+        {
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await _smsService.SendBookingConfirmationAsync(
+                        request.MobileNumber, request.PassengerName, ticket.TicketNumber,
+                        schedule.Route.Name, schedule.Bus.Number, request.TravelDate,
+                        schedule.DepartureTime, seat.SeatNumber, request.FareAmount);
+
+                    if (payment.Status == PaymentStatus.Captured)
+                    {
+                        await _smsService.SendPaymentConfirmationAsync(
+                            request.MobileNumber, request.PassengerName, ticket.TicketNumber,
+                            request.FareAmount, request.PaymentMethod, payment.TransactionRef);
+                    }
+                    else if (payment.Status == PaymentStatus.Failed)
+                    {
+                        await _smsService.SendPaymentFailureAsync(
+                            request.MobileNumber, request.PassengerName, ticket.TicketNumber,
+                            payment.FailureReason ?? "Unknown error");
+                    }
+                }
+                catch
+                {
                 }
             }, CancellationToken.None);
         }
@@ -158,15 +206,6 @@ public class SellTicketCommandHandler : IRequestHandler<SellTicketCommand, Resul
             null, null, payment.Status, payment.TransactionRef));
     }
 
-    /// <summary>
-    /// Format TKT-YYYYMMDD-XXXX, sequential per travel date, matching the reference brief
-    /// exactly. Known limitation: under very high concurrent sell volume on the same date,
-    /// two requests could theoretically read the same count before either commits, causing
-    /// a ticket-number collision (caught by the unique index, surfaced as a generic
-    /// conflict). At this system's scale (a handful of booths, tens of sales/minute) this
-    /// is acceptable; a production-hardened version would use a DB sequence per date
-    /// instead of a COUNT query — noted in ROADMAP.md.
-    /// </summary>
     private async Task<string> GenerateTicketNumberAsync(DateOnly travelDate, CancellationToken cancellationToken)
     {
         var datePart = travelDate.ToString("yyyyMMdd");
