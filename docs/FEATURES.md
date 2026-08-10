@@ -88,6 +88,7 @@ public surface has a different threat model than an internal tool).
 | Occupancy Reporting | ✅ | `GET /api/v1/reports/occupancy` with per-trip seat utilization |
 | Top Routes Reporting | ✅ | `GET /api/v1/reports/top-routes` ranked by volume and revenue |
 | Admin-only Reports | ✅ | All report endpoints restricted to Admin role |
+| Printable Tickets | ✅ | `GET /api/v1/booking/tickets/{id}/print` returns server-rendered HTML with print CSS |
 
 ## Frontend requirements
 

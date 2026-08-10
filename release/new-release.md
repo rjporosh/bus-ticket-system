@@ -1,5 +1,57 @@
 # Release Notes
 
+## Version: 1.2.0
+**Release Date:** 10-08-2026
+**Phase:** Phase 7 — Printable Tickets & Enhanced Customer Experience
+
+---
+
+## Features Built
+
+### Milestone 11 — Server-Rendered Printable Ticket HTML
+- **Backend:** New `IPrintTicketService` + `PrintTicketService` generates professional printable HTML for any sold or cancelled ticket
+- **Backend:** `GetTicketPrintQuery` loads ticket with `Schedule → Bus`, `Route`, and seller username via LINQ join
+- **API:** `GET /api/v1/booking/tickets/{id}/print` returns `text/html` with embedded print stylesheet and auto-print script
+- **HTML content:** Company header, ticket number (monospace), passenger details, route/bus/seat, travel date, departure time, fare, status badge, sold-by info
+- **Cancelled tickets:** Include cancellation reason and timestamp in a highlighted red box
+- **Frontend Admin:** Booking confirmation step shows "Print Ticket" button per sold ticket; search results table gains print icon button
+- **Frontend Client:** My Tickets page shows "Print Ticket" button for active (Sold) bookings
+- **Print flow:** Frontend fetches HTML blob via new `ApiService.getBlob()`, opens in new tab with `URL.createObjectURL()`, browser `window.print()` triggers on page load
+
+### Milestone 12 — Print Service Architecture
+- `PrintTicketDto` extends ticket data with `PrintableHtml` string
+- `GetTicketPrintQueryHandler` reuses `IApplicationDbContext` with Users join for seller username
+- Endpoint authorization uses `Permission:BookingViewOwn` (already seeded for Admin, BoothStaff, Customer roles)
+- `ApiService.getBlob()` added to both admin and client frontends for binary response handling
+
+## Bugs Resolved
+
+| Bug | Resolution |
+|-----|-----------|
+| No printable ticket option | Added server-rendered HTML endpoint with print CSS |
+| Admin could only use browser print on whole page | Dedicated print endpoint renders only the ticket |
+| Client had no print capability | My Tickets page now supports printing active tickets |
+
+## Breaking Changes
+
+**None.** All changes are additive:
+- New `/booking/tickets/{id}/print` endpoint is optional
+- New `PrintTicketDto` is internal to the print flow
+- Frontend print buttons are additive; existing cancel/QR flows unchanged
+
+## Migration Notes
+
+### Database
+No new migration required. No schema changes.
+
+### Frontend
+No migration needed. New print buttons use existing ticket data.
+
+### Configuration
+No new configuration required.
+
+---
+
 ## Version: 1.1.0
 **Release Date:** 10-08-2026
 **Phase:** Phase 6 — Customer Experience & Business Intelligence

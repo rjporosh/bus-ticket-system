@@ -77,3 +77,20 @@ Database artifacts, release tracking, configurable real-bus seat layout, Postman
   - `GET /api/v1/reports/top-routes` — top routes by ticket volume and revenue
 - DTOs: `RevenueReportDto`, `OccupancyReportDto`, `TopRouteDto`
 - All report endpoints support optional `fromDate`, `toDate`, and `routeId` filters
+
+## Phase 7: Printable Tickets & Enhanced Customer Experience — ✅ delivered
+
+### Milestone 11 — Server-Rendered Printable Ticket HTML
+- Backend `IPrintTicketService` + `PrintTicketService` generates professional printable HTML for tickets
+- API: `GET /api/v1/booking/tickets/{id}/print` returns `text/html` with embedded print stylesheet
+- HTML includes company header, ticket number, route/bus/seat/passenger details, fare, status, and auto-print script
+- Cancelled tickets include cancellation reason and timestamp in a highlighted box
+- Frontend Admin: "Print Ticket" button in booking confirmation step and search results
+- Frontend Client: "Print Ticket" button in My Tickets page for active bookings
+- Print opens in new browser tab with `window.print()` triggered on load
+
+### Milestone 12 — Print Service Architecture
+- `PrintTicketDto` carries all ticket fields plus `PrintableHtml` string
+- `GetTicketPrintQueryHandler` loads ticket with Schedule → Bus, Route, and Seller username via join
+- Service returns `ContentResult` with `text/html` media type
+- Authorization reuses `Permission:BookingViewOwn` so customers, staff, and admin can print

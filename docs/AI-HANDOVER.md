@@ -19,41 +19,40 @@ This is a Bus Ticketing System built with:
 | Phase 4 — Production hardening + SQA enablement | ✅ Delivered |
 | Phase 5 — Admin multi-seat booking + RealBus last-row config + Age/Gender display | ✅ Delivered |
 | Phase 6 — Customer Experience & Business Intelligence | ✅ Delivered |
+| Phase 7 — Printable Tickets & Enhanced Customer Experience | ✅ Delivered |
 
 ## Recommended Commit Message
 
 ```
-feat(booking,reports,email,qr): Phase 6 — QR tickets, email notifications, advanced reporting
+feat(print): Phase 7 — server-rendered printable ticket HTML
 
-Phase 6 delivers three customer-experience and business-intelligence milestones:
-QR code ticket generation with client-facing modal, async SMTP booking confirmation
-emails via MailKit, and admin-only revenue/occupancy/top-routes reporting endpoints.
+Phase 7 Milestone 11 delivers printable tickets via a new server-rendered HTML
+endpoint with embedded print stylesheet. Customers, booth staff, and admins can
+print professional tickets from both admin and client portals.
 
 Backend:
-- Application/Common/Interfaces/IServiceInterfaces.cs: added IQrCodeService and IEmailService
-- Application/Common/Models/EmailSettings.cs: new SMTP configuration model
-- Application/Features/Booking/GetTicketQrCode.cs: new query + handler returning base64 QR
-- Application/Features/Booking/SellTicket.cs + SellTicketsCommand.cs: optional Email field,
-  async email confirmation fire-and-forget after transaction commit
-- Application/Features/Reports/ReportDtos.cs + GetRevenueReport.cs + GetOccupancyReport.cs
-  + GetTopRoutes.cs: three report DTOs and handlers
-- Infrastructure/Services/QrCodeService.cs: QRCoder-based PNG generation
-- Infrastructure/Services/SmtpEmailService.cs: MailKit SMTP implementation
-- Infrastructure/DependencyInjection.cs: registered QrCodeService and SmtpEmailService
-- Infrastructure/BusTicketing.Infrastructure.csproj: added QRCoder and MailKit packages
-- Presentation/Controllers/V1/ReportsController.cs: new admin-only reports endpoints
-- Presentation/BusTicketing.Api/appsettings.json: added Email configuration section
-
-Frontend Client:
-- core/models/api-models.ts: added TicketQrCodeResponse and email in SellTicketItem
-- core/services/tickets.service.ts: added getQrCode() method
-- features/my-tickets/my-tickets.component.ts: QR code modal with base64 image display
-- features/booking/booking.component.ts: optional email field in passenger form
-- core/config/api-endpoints.ts: added tickets.qrCode endpoint
+- Application/Common/Interfaces/IServiceInterfaces.cs: added IPrintTicketService
+- Application/Common/Models/BookingDtos.cs: added PrintTicketDto
+- Application/Features/Booking/GetTicketPrint.cs: new query + handler joining
+  Ticket with Schedule (Bus, Route) and Seller username
+- Infrastructure/Services/PrintTicketService.cs: generates professional HTML with
+  embedded CSS, auto-print script, and cancellation details
+- Infrastructure/DependencyInjection.cs: registered PrintTicketService
+- Presentation/Controllers/V1/BookingController.cs: new GET
+  /api/v1/booking/tickets/{id}/print endpoint returning text/html
 
 Frontend Admin:
-- features/booking/booking.component.ts: optional email field in passenger form, included in
-  sellTickets request payload
+- core/config/api-endpoints.ts: added booking.print endpoint
+- core/services/feature-services.ts: added printTicket() method to BookingService
+- core/services/api.service.ts: added getBlob() helper for binary responses
+- features/booking/booking.component.ts: Print Ticket buttons in confirmation step
+  and search results; replaced window.print() with blob download + new tab
+
+Frontend Client:
+- core/config/api-endpoints.ts: added tickets.print endpoint
+- core/services/tickets.service.ts: added printTicket() method
+- core/services/api.service.ts: added getBlob() helper for binary responses
+- features/my-tickets/my-tickets.component.ts: Print Ticket button on active tickets
 ```
 
 ## What Was Completed This Session
@@ -79,6 +78,16 @@ Frontend Admin:
   - `GET /api/v1/reports/top-routes` — top routes by ticket volume and revenue
 - **DTOs:** `RevenueReportDto`, `OccupancyReportDto`, `TopRouteDto`
 - All report endpoints support optional `fromDate`, `toDate`, and `routeId` filters
+
+### Phase 7 Milestone 11 — Printable Tickets
+- **Backend:** `IPrintTicketService` + `PrintTicketService` generates professional printable HTML
+- **Backend:** `GetTicketPrintQuery` + handler loads ticket with Schedule → Bus, Route, Seller
+- **API:** `GET /api/v1/booking/tickets/{id}/print` returns `text/html` with embedded print CSS
+- **Frontend Admin:** "Print Ticket" button in booking confirmation step and search results
+- **Frontend Client:** "Print Ticket" button in My Tickets for active bookings
+- HTML includes company header, ticket details, fare, status badge, and auto-print script
+- Cancelled tickets display cancellation reason and timestamp in a highlighted box
+- Both frontends use `ApiService.getBlob()` + `URL.createObjectURL()` + `window.open()`
 
 ### Phase 5 (Previous Session) — Admin Multi-Seat Booking + RealBus Last-Row Config + Age/Gender Display
 - **`frontend/bus-ticketing-admin/src/app/features/booking/booking.component.ts`**
@@ -128,9 +137,9 @@ Frontend Admin:
 
 ### Priority 1 — Phase 7 Definition
 
-Define Phase 7 scope. Candidate themes:
+Phase 7 scope (in progress):
+- ~~**Printable Tickets:** Server-rendered HTML ticket page with print stylesheet~~ ✅ Delivered
 - **SMS Notifications:** Twilio or local GSM gateway integration for booking alerts
-- **Printable Tickets:** Server-rendered HTML ticket page with print stylesheet
 - **Offline Mode:** Service worker + IndexedDB for client portal offline search
 - **Multi-language:** i18n for admin and client portals
 - **Payment Gateway:** Replace mock payment with real processor (bKash, Nagad, card)
@@ -218,6 +227,10 @@ Latest uncommitted changes:
 - Client booking: age field, same-for-all with explicit `@if` rendering and `valueChanges` subscription
 - Client booking: added missing `MatCheckboxModule` import
 - Both frontends: seat grid gap changed to zero for proper aisle rendering
-- Docs: updated AI-HANDOVER.md
+- Backend: Phase 7 printable tickets — `IPrintTicketService`, `PrintTicketService`, `GetTicketPrintQuery`, new `/print` endpoint
+- Frontend Admin: Print Ticket buttons in booking confirmation and search results
+- Frontend Client: Print Ticket button in My Tickets page
+- Tests: unit tests for `PrintTicketService`, integration tests for `/print` endpoint, load test script
+- Docs: updated AI-HANDOVER.md, ROADMAP.md, FEATURES.md, release notes
 
 No code logic was broken. All changes are additive.
