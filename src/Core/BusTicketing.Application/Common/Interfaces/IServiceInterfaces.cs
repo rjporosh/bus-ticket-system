@@ -1,4 +1,6 @@
+using BusTicketing.Application.Features.Booking;
 using BusTicketing.Domain.Entities;
+using BusTicketing.Domain.Enums;
 
 namespace BusTicketing.Application.Common.Interfaces;
 
@@ -50,4 +52,18 @@ public interface IQrCodeService
 public interface IEmailService
 {
     Task SendBookingConfirmationAsync(string toEmail, string passengerName, string ticketNumber, string routeName, string busNumber, DateOnly travelDate, TimeOnly departureTime, string seatNumber, decimal fareAmount, CancellationToken cancellationToken = default);
+}
+
+/// <summary>Sends transactional SMS such as booking confirmations and payment alerts.</summary>
+public interface ISmsService
+{
+    Task SendBookingConfirmationAsync(string toPhoneNumber, string passengerName, string ticketNumber, string routeName, string busNumber, DateOnly travelDate, TimeOnly departureTime, string seatNumber, decimal fareAmount, CancellationToken cancellationToken = default);
+    Task SendPaymentConfirmationAsync(string toPhoneNumber, string passengerName, string ticketNumber, decimal amount, PaymentMethod method, string transactionRef, CancellationToken cancellationToken = default);
+    Task SendPaymentFailureAsync(string toPhoneNumber, string passengerName, string ticketNumber, string reason, CancellationToken cancellationToken = default);
+}
+
+/// <summary>Generates printable HTML for tickets.</summary>
+public interface IPrintTicketService
+{
+    Task<string> GenerateHtmlAsync(PrintTicketDto ticket, CancellationToken cancellationToken = default);
 }
