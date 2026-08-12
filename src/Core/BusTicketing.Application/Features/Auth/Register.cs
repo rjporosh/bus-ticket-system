@@ -82,7 +82,7 @@ public class RegisterCommandHandler : IRequestHandler<RegisterCommand, Result<Au
                 // instead of letting the unique-constraint violation bubble up.
                 _db.Roles.Remove(customerRole);
                 customerRole = await _db.Roles.FirstOrDefaultAsync(r => r.Name == SystemRoles.Customer, cancellationToken)
-                    ?? throw;
+                    ?? throw new InvalidOperationException("Failed to create or retrieve the Customer role.");
             }
         }
 
