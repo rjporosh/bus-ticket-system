@@ -1,4 +1,3 @@
-using System.Net;
 using BusTicketing.Application.Common.Interfaces;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -35,8 +34,12 @@ public class RuntimeErrorLoggerMiddleware
                 $"Unhandled exception in {context.Request.Method} {context.Request.Path}",
                 ex);
 
-            context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
-            await context.Response.WriteAsync("An unexpected error occurred. Please try again later.");
+            // Do not write a response here: GlobalExceptionMiddleware wraps this
+            // middleware in the pipeline and is responsible for producing the
+            // actual (localized, problem+json) error response. Writing a plain
+            // text response here would short-circuit that handling and could
+            // also suppress headers (e.g. CORS) applied further out.
+            throw;
         }
     }
 }

@@ -53,6 +53,9 @@
         },
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
+          "options": {
+            "port": 4201
+          },
           "configurations": {
             "production": { "buildTarget": "bus-ticketing-admin:build:production" },
             "development": { "buildTarget": "bus-ticketing-admin:build:development" }

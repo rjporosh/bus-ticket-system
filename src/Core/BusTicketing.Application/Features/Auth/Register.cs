@@ -70,7 +70,20 @@ public class RegisterCommandHandler : IRequestHandler<RegisterCommand, Result<Au
         {
             customerRole = Role.Create(SystemRoles.Customer, "Self-service customer account.", isSystemRole: true);
             _db.Roles.Add(customerRole);
-            await _db.SaveChangesAsync(cancellationToken);
+            try
+            {
+                await _db.SaveChangesAsync(cancellationToken);
+            }
+            catch (DbUpdateException)
+            {
+                // Another concurrent registration created the same system role
+                // between our check and this insert (unique index on Role.Name).
+                // Detach our speculative insert and use the row that won the race
+                // instead of letting the unique-constraint violation bubble up.
+                _db.Roles.Remove(customerRole);
+                customerRole = await _db.Roles.FirstOrDefaultAsync(r => r.Name == SystemRoles.Customer, cancellationToken)
+                    ?? throw;
+            }
         }
 
         var passwordHash = _passwordHasher.Hash(request.Password);

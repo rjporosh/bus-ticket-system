@@ -104,6 +104,16 @@ try
     app.UseRequestLocalization(app.Services.GetRequiredService<RequestLocalizationOptions>());
     app.UseSerilogRequestLogging();
     app.UseMiddleware<GlobalExceptionMiddleware>();
+
+    // CORS must run before anything that can short-circuit or fail the request
+    // (rate limiting, security headers, the runtime error logger, graceful
+    // shutdown) so that every response -- including 429s, 503s and error
+    // responses -- carries the Access-Control-Allow-Origin headers the
+    // frontends need. Applying CORS after those middlewares meant their
+    // responses had no CORS headers at all, which browsers report as a CORS
+    // failure even though the real cause is an unrelated backend error.
+    app.UseCors("AllowConfiguredOrigins");
+
     app.UseMiddleware<RateLimitMiddleware>();
     app.UseMiddleware<SecurityHeadersMiddleware>();
     app.UseRuntimeErrorLogger();
@@ -123,7 +133,6 @@ try
         app.UseHttpsRedirection();
     }
 
-    app.UseCors("AllowConfiguredOrigins");
     app.UseAuthentication();
     app.UseAuthorization();
 
