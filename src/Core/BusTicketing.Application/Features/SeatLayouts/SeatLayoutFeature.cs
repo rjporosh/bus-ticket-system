@@ -42,11 +42,14 @@ public class GetSeatLayoutByBusIdQueryHandler : IRequestHandler<GetSeatLayoutByB
             var config = System.Text.Json.JsonSerializer.Deserialize<RealBusConfig>(layout.LayoutConfigJson) ?? new RealBusConfig();
             var rowSeats = config.SeatsPerRow ?? new List<RowSeatGroup>();
             var totalRows = seats.Max(s => s.RowLabel[0] - 'A') + 1;
+            var defaultLeft = (layout.Columns + 1) / 2;
+            var defaultRight = layout.Columns / 2;
 
             string? currentRowLabel = null;
             int seatIndexInRow = 0;
-            int leftCount = 2;
-            int rightCount = 2;
+            int leftCount = defaultLeft;
+            int rightCount = defaultRight;
+            int aisleGap = config.AisleGap;
             bool driverInFirstRow = config.DriverSeat && seats.Any(s => s.RowLabel == "A" && s.IsDriver);
 
             foreach (var seat in seats)
@@ -56,21 +59,25 @@ public class GetSeatLayoutByBusIdQueryHandler : IRequestHandler<GetSeatLayoutByB
                     currentRowLabel = seat.RowLabel;
                     seatIndexInRow = 0;
                     var rowIdx = seat.RowLabel[0] - 'A';
-                    if (rowIdx == totalRows - 1 && config.LastRowConfig != null)
+                    var isOverriddenLastRow = rowIdx == totalRows - 1 && config.LastRowConfig != null;
+                    if (isOverriddenLastRow)
                     {
-                        leftCount = config.LastRowConfig.Left;
-                        rightCount = config.LastRowConfig.Right;
+                        leftCount = config.LastRowConfig!.Left;
+                        rightCount = config.LastRowConfig!.Right;
                     }
                     else
                     {
-                        leftCount = rowSeats.Count > rowIdx ? rowSeats[rowIdx].Left : 2;
-                        rightCount = rowSeats.Count > rowIdx ? rowSeats[rowIdx].Right : 2;
+                        leftCount = rowSeats.Count > rowIdx ? rowSeats[rowIdx].Left : defaultLeft;
+                        rightCount = rowSeats.Count > rowIdx ? rowSeats[rowIdx].Right : defaultRight;
                     }
+                    // An overridden last row is a continuous run of seats with no
+                    // walking aisle: render it without the gap column.
+                    aisleGap = isOverriddenLastRow ? 0 : config.AisleGap;
                 }
 
                 if (seat.IsDriver)
                 {
-                    var totalWidth = leftCount + config.AisleGap + rightCount;
+                    var totalWidth = leftCount + aisleGap + rightCount;
                     var centerCol = (totalWidth + 1) / 2;
                     seatDtos.Add(new SeatDto(seat.Id, seat.SeatNumber, seat.RowLabel, seat.ColumnNumber, seat.Class, seat.IsActive, seat.IsDriver, 1, centerCol));
                 }
@@ -83,7 +90,7 @@ public class GetSeatLayoutByBusIdQueryHandler : IRequestHandler<GetSeatLayoutByB
                     }
                     else
                     {
-                        visualCol = leftCount + config.AisleGap + (seatIndexInRow - leftCount) + 1;
+                        visualCol = leftCount + aisleGap + (seatIndexInRow - leftCount) + 1;
                     }
 
                     var rowVisual = seat.RowLabel == "A" && driverInFirstRow

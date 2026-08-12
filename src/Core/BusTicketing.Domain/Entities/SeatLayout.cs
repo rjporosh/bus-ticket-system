@@ -68,9 +68,16 @@ public class SeatLayout : BaseEntity
 
     private static void GenerateRealBusLayout(SeatLayout layout, int rows, int columns, SeatClass defaultClass, string configJson)
     {
-        // Default real-bus config: driver seat front-left, then 2+2 with aisle
+        // Default real-bus config: driver seat front-left, then split evenly
+        // left/right of the aisle, with an aisle gap of 1.
         var config = System.Text.Json.JsonSerializer.Deserialize<RealBusConfig>(configJson) ?? new RealBusConfig();
-        var currentRow = 0;
+
+        // Default left/right split when the caller didn't provide an explicit
+        // per-row breakdown: derive it from 'columns' (the actual number of
+        // seats per normal row), not a hardcoded constant. E.g. columns=4 ->
+        // 2 left + 2 right; columns=5 -> 3 left + 2 right.
+        var defaultLeft = (columns + 1) / 2;
+        var defaultRight = columns / 2;
 
         for (var r = 0; r < rows; r++)
         {
@@ -85,10 +92,10 @@ public class SeatLayout : BaseEntity
 
             var leftSeats = r == rows - 1 && config.LastRowConfig != null
                 ? config.LastRowConfig.Left
-                : (config.SeatsPerRow != null && config.SeatsPerRow.Count > r ? config.SeatsPerRow[r].Left : 2);
+                : (config.SeatsPerRow != null && config.SeatsPerRow.Count > r ? config.SeatsPerRow[r].Left : defaultLeft);
             var rightSeats = r == rows - 1 && config.LastRowConfig != null
                 ? config.LastRowConfig.Right
-                : (config.SeatsPerRow != null && config.SeatsPerRow.Count > r ? config.SeatsPerRow[r].Right : 2);
+                : (config.SeatsPerRow != null && config.SeatsPerRow.Count > r ? config.SeatsPerRow[r].Right : defaultRight);
 
             for (var s = 0; s < leftSeats; s++)
             {
@@ -96,8 +103,10 @@ public class SeatLayout : BaseEntity
                 seatIndex++;
             }
 
-            if (config.AisleGap > 0)
-                seatIndex += config.AisleGap;
+            // The aisle is a walking-gap visual only (see visualCol mapping in
+            // SeatLayoutFeature/GetAvailableSeats); it must never consume a
+            // seat-number index or cause a number to be skipped, so seatIndex
+            // is deliberately NOT advanced by config.AisleGap here.
 
             for (var s = 0; s < rightSeats; s++)
             {
