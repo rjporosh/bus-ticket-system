@@ -167,6 +167,15 @@ type WizardStep = 'trip' | 'seat' | 'passenger' | 'confirmation';
                           </button>
                         }
                       </div>
+                      <div class="seat-legend">
+                        <span class="legend-item"><span class="legend-box legend-box--available"></span> Available</span>
+                        <span class="legend-item"><span class="legend-box legend-box--selected"></span> Selected</span>
+                        <span class="legend-item"><span class="legend-box legend-box--sold"></span> Sold</span>
+                        <span class="legend-item"><span class="legend-box legend-box--inactive"></span> Out of service</span>
+                        <span class="legend-item"><span class="legend-box legend-box--driver"></span> Driver</span>
+                        <span class="legend-item"><span class="legend-box legend-box--male"></span> Male</span>
+                        <span class="legend-item"><span class="legend-box legend-box--female"></span> Female</span>
+                      </div>
                       <button mat-flat-button color="primary" [disabled]="selectedSeats().length === 0" (click)="step.set('passenger')">
                         Continue with {{ selectedSeats().length }} Seat{{ selectedSeats().length > 1 ? 's' : '' }}
                       </button>
@@ -524,6 +533,16 @@ type WizardStep = 'trip' | 'seat' | 'passenger' | 'confirmation';
       .seat--female { background: #fce4ec; border-color: #f48fb1; color: #c2185b; }
       .seat--driver { border-color: #ff9800; background: #fff3e0; color: #e65100; cursor: default; }
       .driver-icon { font-size: 1.1rem; }
+      .seat-legend { margin-top: 1rem; display: flex; gap: 1.5rem; flex-wrap: wrap; }
+      .legend-item { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: var(--color-text-muted); }
+      .legend-box { width: 16px; height: 16px; border-radius: 4px; border: 1px solid var(--color-available); }
+      .legend-box--available { background: var(--color-available-bg); border-color: var(--color-available); }
+      .legend-box--selected { background: var(--color-accent); border-color: var(--color-accent); }
+      .legend-box--sold { background: var(--color-sold-bg); border-color: var(--color-sold); }
+      .legend-box--inactive { background: var(--color-outofservice-bg); border-color: var(--color-outofservice); }
+      .legend-box--driver { background: #fff3e0; border-color: #ff9800; }
+      .legend-box--male { background: #e3f2fd; border-color: #90caf9; }
+      .legend-box--female { background: #fce4ec; border-color: #f48fb1; }
       .passenger-initials { font-size: 0.6rem; font-weight: 700; }
       .driver-chip { background: #fff3e0; color: #e65100; border-color: #ff9800; }
 
