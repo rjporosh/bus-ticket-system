@@ -151,7 +151,8 @@ type WizardStep = 'trip' | 'seat' | 'passenger' | 'confirmation';
                             [class.seat--male]="seat.isSold && seat.passengerGender === 'Male'"
                             [class.seat--female]="seat.isSold && seat.passengerGender === 'Female'"
                             [disabled]="seat.isSold || !seat.isInService || seat.isDriver"
-                            [matTooltip]="seatClassLabel(seat)"
+                            [matTooltip]="seatTooltip(seat)"
+                            [matTooltipClass]="seat.isSold && seat.passengerName ? 'seat-tooltip--passenger' : ''"
                             [style.grid-row]="getVisualRow(seat)"
                             [style.grid-column]="getVisualCol(seat)"
                             (click)="toggleSeat(seat)"
@@ -727,6 +728,19 @@ export class BookingComponent {
 
   seatClassLabel(seat: SeatAvailabilityDto): string {
     return `${SeatClassLabel[seat.class]}${seat.isSold ? ' · Sold' : seat.isInService ? ' · Available' : ' · Out of service'}`;
+  }
+
+  seatTooltip(seat: SeatAvailabilityDto): string {
+    if (seat.isDriver) {
+      return 'Driver';
+    }
+    if (seat.isSold && seat.passengerName) {
+      const lines = [seat.passengerName];
+      if (seat.passengerGender) lines.push(`Gender: ${seat.passengerGender}`);
+      if (seat.passengerAge != null) lines.push(`Age: ${seat.passengerAge}`);
+      return lines.join('\n');
+    }
+    return this.seatClassLabel(seat);
   }
 
   sellTickets(): void {

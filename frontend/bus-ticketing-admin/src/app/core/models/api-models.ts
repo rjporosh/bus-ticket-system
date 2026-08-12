@@ -215,6 +215,7 @@ export interface SeatAvailabilityDto {
   visualCol?: number;
   passengerName?: string;
   passengerGender?: string;
+  passengerAge?: number;
 }
 
 export interface TicketDto {

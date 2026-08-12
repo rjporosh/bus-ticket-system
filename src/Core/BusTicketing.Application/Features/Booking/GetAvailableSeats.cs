@@ -29,10 +29,10 @@ public class GetAvailableSeatsQueryHandler : IRequestHandler<GetAvailableSeatsQu
 
         var soldTickets = await _db.Tickets
             .Where(t => t.ScheduleId == request.ScheduleId && t.TravelDate == request.TravelDate && t.Status == TicketStatus.Sold)
-            .Select(t => new { t.SeatId, t.PassengerName, t.Gender })
+            .Select(t => new { t.SeatId, t.PassengerName, t.Gender, t.Age })
             .ToListAsync(cancellationToken);
 
-        var soldMap = soldTickets.ToDictionary(t => t.SeatId, t => (t.PassengerName, t.Gender));
+        var soldMap = soldTickets.ToDictionary(t => t.SeatId, t => (t.PassengerName, t.Gender, t.Age));
 
         var seats = layout.Seats
             .OrderBy(s => s.RowLabel).ThenBy(s => s.ColumnNumber)
@@ -50,14 +50,14 @@ public class GetAvailableSeatsQueryHandler : IRequestHandler<GetAvailableSeatsQu
             {
                 var isSold = soldMap.TryGetValue(seat.Id, out var soldInfo);
                 var rowVisual = seat.RowLabel[0] - 'A' + 1;
-                result.Add(new SeatAvailabilityDto(seat.Id, seat.SeatNumber, seat.RowLabel, seat.ColumnNumber, seat.Class, seat.IsActive, isSold, false, rowVisual, seat.ColumnNumber, soldInfo.PassengerName, soldInfo.Gender));
+                result.Add(new SeatAvailabilityDto(seat.Id, seat.SeatNumber, seat.RowLabel, seat.ColumnNumber, seat.Class, seat.IsActive, isSold, false, rowVisual, seat.ColumnNumber, soldInfo.PassengerName, soldInfo.Gender, soldInfo.Age));
             }
         }
 
         return Result.Success(result);
     }
 
-    private static void MapRealBusSeats(IList<Seat> seats, string layoutConfigJson, Dictionary<Guid, (string PassengerName, string? Gender)> soldMap, List<SeatAvailabilityDto> result)
+    private static void MapRealBusSeats(IList<Seat> seats, string layoutConfigJson, Dictionary<Guid, (string PassengerName, string? Gender, int? Age)> soldMap, List<SeatAvailabilityDto> result)
     {
         var config = System.Text.Json.JsonSerializer.Deserialize<RealBusConfig>(layoutConfigJson) ?? new RealBusConfig();
         var rowSeats = config.SeatsPerRow ?? new List<RowSeatGroup>();
@@ -113,7 +113,7 @@ public class GetAvailableSeatsQueryHandler : IRequestHandler<GetAvailableSeatsQu
                     : (seat.RowLabel[0] - 'A' + 1 + (driverInFirstRow ? 1 : 0));
 
                 var isSold = soldMap.TryGetValue(seat.Id, out var soldInfo);
-                result.Add(new SeatAvailabilityDto(seat.Id, seat.SeatNumber, seat.RowLabel, seat.ColumnNumber, seat.Class, seat.IsActive, isSold, false, rowVisual, visualCol, soldInfo.PassengerName, soldInfo.Gender));
+                result.Add(new SeatAvailabilityDto(seat.Id, seat.SeatNumber, seat.RowLabel, seat.ColumnNumber, seat.Class, seat.IsActive, isSold, false, rowVisual, visualCol, soldInfo.PassengerName, soldInfo.Gender, soldInfo.Age));
                 seatIndexInRow++;
             }
         }

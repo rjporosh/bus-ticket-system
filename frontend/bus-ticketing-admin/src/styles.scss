@@ -106,3 +106,12 @@ button:focus-visible,
     display: none !important;
   }
 }
+
+// Admin seat-hover tooltip (passenger Name/Gender/Age on booked seats). Must be
+// global: MatTooltip renders through the CDK overlay, outside this component's
+// view encapsulation, so a component-scoped style would never reach it.
+.seat-tooltip--passenger {
+  white-space: pre-line;
+  text-align: left;
+  line-height: 1.4;
+}

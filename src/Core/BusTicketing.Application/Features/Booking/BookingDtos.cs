@@ -39,7 +39,8 @@ public record SeatAvailabilityDto(
     int? VisualRow = null,
     int? VisualCol = null,
     string? PassengerName = null,
-    string? PassengerGender = null);
+    string? PassengerGender = null,
+    int? PassengerAge = null);
 
 public record DashboardSummaryDto(
     DateOnly Date,
