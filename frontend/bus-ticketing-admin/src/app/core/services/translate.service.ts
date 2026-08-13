@@ -65,7 +65,8 @@ export class TranslateService implements OnDestroy {
         this._loading.set(false);
         return translations;
       }),
-      catchError(() => {
+      catchError((error) => {
+        console.error(`[TranslateService] Failed to load translation file for language "${lang}":`, error);
         this._loading.set(false);
         return of({});
       }),
