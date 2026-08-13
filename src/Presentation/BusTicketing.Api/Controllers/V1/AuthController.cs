@@ -32,7 +32,7 @@ public class AuthController : ControllerBase
     public async Task<IResult> Register([FromBody] RegisterCommand command, CancellationToken cancellationToken)
     {
         var result = await _sender.Send(command, cancellationToken);
-        return result.ToApiResult(_localizer);
+        return result.ToApiResult(localizer: _localizer);
     }
 
     [HttpPost("login")]
@@ -42,7 +42,7 @@ public class AuthController : ControllerBase
     public async Task<IResult> Login([FromBody] LoginCommand command, CancellationToken cancellationToken)
     {
         var result = await _sender.Send(command, cancellationToken);
-        return result.ToApiResult(_localizer);
+        return result.ToApiResult(localizer: _localizer);
     }
 
     [HttpPost("refresh")]
@@ -52,7 +52,7 @@ public class AuthController : ControllerBase
     public async Task<IResult> Refresh([FromBody] RefreshTokenCommand command, CancellationToken cancellationToken)
     {
         var result = await _sender.Send(command, cancellationToken);
-        return result.ToApiResult(_localizer);
+        return result.ToApiResult(localizer: _localizer);
     }
 
     [HttpPost("logout")]
