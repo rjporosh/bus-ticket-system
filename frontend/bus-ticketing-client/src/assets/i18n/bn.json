@@ -175,6 +175,7 @@
     "remarks": "বিকল্প备注",
     "phoneOptional": "ফোন (ঐচ্ছিক)",
     "loginTitle": "ক্লায়েন্ট লগইন",
+    "loginSubtitle": "আপনার বুকিং দেখতে সাইন ইন করুন",
     "registerTitle": "অ্যাকাউন্ট তৈরি",
     "fullNameRequired": "পুরো নাম প্রয়োজন",
     "mobileRequired": "মোবাইল নম্বর প্রয়োজন",

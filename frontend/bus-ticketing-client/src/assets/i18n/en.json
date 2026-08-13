@@ -175,6 +175,7 @@
     "remarks": "Remarks",
     "phoneOptional": "Phone (optional)",
     "loginTitle": "Client Login",
+    "loginSubtitle": "Sign in to view your bookings",
     "registerTitle": "Create Account",
     "fullNameRequired": "Full Name is required",
     "mobileRequired": "Mobile Number is required",
