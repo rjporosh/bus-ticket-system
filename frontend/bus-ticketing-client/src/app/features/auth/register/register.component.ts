@@ -13,6 +13,8 @@ import Swal from 'sweetalert2';
 import { AuthService } from '../../../core/services/auth.service';
 import { RegisterRequest } from '../../../core/models/api-models';
 import { ProblemDetails } from '../../../core/models/api-models';
+import { TranslatePipe } from '../../../core/pipes/translate.pipe';
+import { TranslateService } from '../../../core/services/translate.service';
 
 @Component({
   selector: 'app-register',
@@ -27,6 +29,7 @@ import { ProblemDetails } from '../../../core/models/api-models';
     MatButtonModule,
     MatIconModule,
     MatProgressSpinnerModule,
+    TranslatePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -36,65 +39,65 @@ import { ProblemDetails } from '../../../core/models/api-models';
           <div class="register-card__badge">
             <mat-icon>person_add</mat-icon>
           </div>
-          <h1>Create Account</h1>
-          <p class="mono">Join BusTicketing to book and manage your trips</p>
+          <h1>{{ 'app.registerTitle' | translate }}</h1>
+          <p class="mono">{{ 'app.registerSubtitle' | translate }}</p>
         </div>
 
         <form [formGroup]="form" (ngSubmit)="submit()">
           <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Full Name</mat-label>
+            <mat-label>{{ 'app.fullName' | translate }}</mat-label>
             <input matInput formControlName="fullName" autocomplete="name" />
             @if (form.controls.fullName.hasError('required') && form.controls.fullName.touched) {
-              <mat-error>Full name is required.</mat-error>
+              <mat-error>{{ 'app.fullNameRequired' | translate }}</mat-error>
             }
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Username</mat-label>
+            <mat-label>{{ 'app.username' | translate }}</mat-label>
             <input matInput formControlName="username" autocomplete="username" />
             @if (form.controls.username.hasError('required') && form.controls.username.touched) {
-              <mat-error>Username is required.</mat-error>
+              <mat-error>{{ 'app.usernameRequired' | translate }}</mat-error>
             }
             @if (form.controls.username.hasError('minlength') && form.controls.username.touched) {
-              <mat-error>Username must be at least 3 characters.</mat-error>
+              <mat-error>{{ 'app.usernameMinLength' | translate }}</mat-error>
             }
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Email</mat-label>
+            <mat-label>{{ 'app.email' | translate }}</mat-label>
             <input matInput formControlName="email" type="email" autocomplete="email" />
             @if (form.controls.email.hasError('required') && form.controls.email.touched) {
-              <mat-error>Email is required.</mat-error>
+              <mat-error>{{ 'app.emailRequired' | translate }}</mat-error>
             }
             @if (form.controls.email.hasError('email') && form.controls.email.touched) {
-              <mat-error>Enter a valid email address.</mat-error>
+              <mat-error>{{ 'app.emailInvalid' | translate }}</mat-error>
             }
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Phone (optional)</mat-label>
+            <mat-label>{{ 'app.phoneOptional' | translate }}</mat-label>
             <input matInput formControlName="phoneNumber" autocomplete="tel" placeholder="01XXXXXXXXX" />
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Password</mat-label>
+            <mat-label>{{ 'app.password' | translate }}</mat-label>
             <input matInput type="password" formControlName="password" autocomplete="new-password" />
             @if (form.controls.password.hasError('required') && form.controls.password.touched) {
-              <mat-error>Password is required.</mat-error>
+              <mat-error>{{ 'app.passwordRequired' | translate }}</mat-error>
             }
             @if (form.controls.password.hasError('minlength') && form.controls.password.touched) {
-              <mat-error>Password must be at least 8 characters.</mat-error>
+              <mat-error>{{ 'app.passwordMinLength' | translate }}</mat-error>
             }
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Confirm Password</mat-label>
+            <mat-label>{{ 'app.confirmPassword' | translate }}</mat-label>
             <input matInput type="password" formControlName="confirmPassword" autocomplete="new-password" />
             @if (form.controls.confirmPassword.hasError('required') && form.controls.confirmPassword.touched) {
-              <mat-error>Please confirm your password.</mat-error>
+              <mat-error>{{ 'app.confirmPasswordRequired' | translate }}</mat-error>
             }
             @if (form.controls.confirmPassword.hasError('mismatch') && form.controls.confirmPassword.touched) {
-              <mat-error>Passwords do not match.</mat-error>
+              <mat-error>{{ 'app.passwordsDoNotMatch' | translate }}</mat-error>
             }
           </mat-form-field>
 
@@ -106,14 +109,14 @@ import { ProblemDetails } from '../../../core/models/api-models';
             @if (submitting()) {
               <mat-spinner diameter="20" />
             } @else {
-              Create Account
+              {{ 'app.createAccount' | translate }}
             }
           </button>
         </form>
 
         <div class="register-card__footer">
-          <span>Already have an account?</span>
-          <a routerLink="/login">Sign in</a>
+          <span>{{ 'app.alreadyHaveAccount' | translate }}</span>
+          <a routerLink="/login">{{ 'app.signIn' | translate }}</a>
         </div>
       </mat-card>
     </div>
@@ -154,6 +157,7 @@ export class RegisterComponent {
   private readonly fb = inject(FormBuilder);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly translate = inject(TranslateService);
 
   protected readonly submitting = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
@@ -193,8 +197,8 @@ export class RegisterComponent {
         this.submitting.set(false);
         Swal.fire({
           icon: 'success',
-          title: 'Account Created!',
-          text: 'Your account has been successfully created. Welcome to BusTicketing!',
+          title: this.translate.getSync('app.accountCreated'),
+          text: this.translate.getSync('app.accountCreatedMessage'),
           confirmButtonColor: '#1a73e8',
         }).then(() => {
           this.router.navigate(['/home']);
@@ -203,7 +207,7 @@ export class RegisterComponent {
       error: (error: HttpErrorResponse) => {
         this.submitting.set(false);
         const problem = error.error as ProblemDetails | undefined;
-        this.errorMessage.set(problem?.detail ?? problem?.title ?? 'Registration failed. Please try again.');
+        this.errorMessage.set(problem?.detail ?? problem?.title ?? this.translate.getSync('app.registrationFailed'));
       },
     });
   }
