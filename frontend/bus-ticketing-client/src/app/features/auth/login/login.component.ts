@@ -11,6 +11,8 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AuthService } from '../../../core/services/auth.service';
 import { LoginRequest, ProblemDetails } from '../../../core/models/api-models';
+import { TranslatePipe } from '../../../core/pipes/translate.pipe';
+import { TranslateService } from '../../../core/services/translate.service';
 
 @Component({
   selector: 'app-login',
@@ -25,6 +27,7 @@ import { LoginRequest, ProblemDetails } from '../../../core/models/api-models';
     MatButtonModule,
     MatIconModule,
     MatProgressSpinnerModule,
+    TranslatePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -34,24 +37,24 @@ import { LoginRequest, ProblemDetails } from '../../../core/models/api-models';
           <div class="login-card__badge">
             <mat-icon>directions_bus</mat-icon>
           </div>
-          <h1>Client Login</h1>
-          <p class="mono">Sign in to view your bookings</p>
+          <h1>{{ 'app.loginTitle' | translate }}</h1>
+          <p class="mono">{{ 'app.loginSubtitle' | translate }}</p>
         </div>
 
         <form [formGroup]="form" (ngSubmit)="submit()">
           <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Username or Email</mat-label>
+            <mat-label>{{ 'app.usernameOrEmail' | translate }}</mat-label>
             <input matInput formControlName="username" autocomplete="username" />
             @if (form.controls.username.hasError('required') && form.controls.username.touched) {
-              <mat-error>Username is required.</mat-error>
+              <mat-error>{{ 'app.usernameRequired' | translate }}</mat-error>
             }
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Password</mat-label>
+            <mat-label>{{ 'app.password' | translate }}</mat-label>
             <input matInput type="password" formControlName="password" autocomplete="current-password" />
             @if (form.controls.password.hasError('required') && form.controls.password.touched) {
-              <mat-error>Password is required.</mat-error>
+              <mat-error>{{ 'app.passwordRequired' | translate }}</mat-error>
             }
           </mat-form-field>
 
@@ -63,14 +66,14 @@ import { LoginRequest, ProblemDetails } from '../../../core/models/api-models';
             @if (submitting()) {
               <mat-spinner diameter="20" />
             } @else {
-              Sign in
+              {{ 'app.signIn' | translate }}
             }
           </button>
         </form>
 
         <div class="login-card__footer">
-          <span>Don't have an account?</span>
-          <a routerLink="/register">Register</a>
+          <span>{{ 'app.dontHaveAccount' | translate }}</span>
+          <a routerLink="/register">{{ 'app.registerNow' | translate }}</a>
         </div>
       </mat-card>
     </div>
@@ -111,6 +114,7 @@ export class LoginComponent {
   private readonly fb = inject(FormBuilder);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly translate = inject(TranslateService);
 
   protected readonly submitting = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
@@ -140,7 +144,7 @@ export class LoginComponent {
       error: (error: HttpErrorResponse) => {
         this.submitting.set(false);
         const problem = error.error as ProblemDetails | undefined;
-        this.errorMessage.set(problem?.title ?? problem?.detail ?? 'Invalid username or password.');
+        this.errorMessage.set(problem?.title ?? problem?.detail ?? this.translate.getSync('app.invalidCredentials'));
       },
     });
   }

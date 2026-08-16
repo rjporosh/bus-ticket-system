@@ -17,6 +17,7 @@
     "password": "Password",
     "confirmPassword": "Confirm Password",
     "username": "Username",
+    "usernameOrEmail": "Username or Email",
     "confirm": "Confirm",
     "back": "Back",
     "next": "Next",
