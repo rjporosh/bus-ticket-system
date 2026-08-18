@@ -11,6 +11,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { AuthService } from '../../../core/services/auth.service';
 import { ProblemDetails } from '../../../core/models/api-models';
 import { TranslatePipe } from '../../../core/pipes/translate.pipe';
+import { TranslateService } from '../../../core/services/translate.service';
 
 @Component({
   selector: 'app-login',
@@ -147,6 +148,7 @@ export class LoginComponent {
   private readonly fb = inject(FormBuilder);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly translate = inject(TranslateService);
 
   protected readonly submitting = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
@@ -174,7 +176,7 @@ export class LoginComponent {
       error: (error: HttpErrorResponse) => {
         this.submitting.set(false);
         const problem = error.error as ProblemDetails | undefined;
-        this.errorMessage.set(problem?.title ?? problem?.detail ?? 'Invalid username or password.');
+        this.errorMessage.set(problem?.title ?? problem?.detail ?? this.translate.getSync('app.invalidCredentials'));
       },
     });
   }
