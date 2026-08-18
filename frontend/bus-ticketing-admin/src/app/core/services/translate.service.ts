@@ -1,7 +1,7 @@
 import { Injectable, signal, effect, OnDestroy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, combineLatest as rxjsCombineLatest, of, Subscription } from 'rxjs';
-import { catchError, map, shareReplay } from 'rxjs/operators';
+import { catchError, map, shareReplay, distinctUntilChanged } from 'rxjs/operators';
 
 export type Language = 'en' | 'bn';
 
@@ -23,10 +23,8 @@ export class TranslateService implements OnDestroy {
   readonly loading = this._loading.asReadonly();
 
   constructor(private readonly http: HttpClient) {
-    this.loadLanguage(this._currentLanguage()).subscribe();
     effect(() => {
-      const lang = this._currentLanguage();
-      this.loadLanguage(lang).subscribe();
+      this.loadLanguage(this._currentLanguage()).subscribe();
     });
   }
 
@@ -40,10 +38,14 @@ export class TranslateService implements OnDestroy {
   }
 
   get(key: string, interpolateParams?: Record<string, any>): Observable<string> {
-    const translations = this._translations.value;
-    const current = translations[this._currentLanguage()] ?? {};
-    const text = this.resolveKey(current, key) ?? key;
-    return of(this.interpolate(text, interpolateParams));
+    return this._translations.pipe(
+      map(translations => {
+        const current = translations[this._currentLanguage()] ?? {};
+        const text = this.resolveKey(current, key) ?? key;
+        return this.interpolate(text, interpolateParams);
+      }),
+      distinctUntilChanged()
+    );
   }
 
   getSync(key: string, interpolateParams?: Record<string, any>): string {

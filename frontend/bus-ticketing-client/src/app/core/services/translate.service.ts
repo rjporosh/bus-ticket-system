@@ -1,7 +1,7 @@
 import { Injectable, signal, effect } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, of } from 'rxjs';
-import { catchError, map, shareReplay } from 'rxjs/operators';
+import { catchError, map, shareReplay, distinctUntilChanged } from 'rxjs/operators';
 
 export type Language = 'en' | 'bn';
 
@@ -38,10 +38,16 @@ export class TranslateService {
   }
 
   get(key: string, interpolateParams?: Record<string, any>): Observable<string> {
-    const translations = this._translations.value;
-    const current = translations[this._currentLanguage()] ?? {};
-    const text = this.resolveKey(current, key) ?? key;
-    return of(this.interpolate(text, interpolateParams));
+    return this._translations.pipe(
+      // map() will automatically fire every time _translations gets updated!
+      map(translations => {
+        const current = translations[this._currentLanguage()] ?? {};
+        const text = this.resolveKey(current, key) ?? key;
+        return this.interpolate(text, interpolateParams);
+      }),
+      // Prevent the UI from flickering/updating if the translation hasn't changed
+      distinctUntilChanged() 
+    );
   }
 
   getSync(key: string, interpolateParams?: Record<string, any>): string {
