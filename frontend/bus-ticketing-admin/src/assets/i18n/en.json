@@ -1,6 +1,10 @@
 {
   "app": {
     "title": "Bus Ticketing System",
+    "brandTitle": "Bus Ticketing",
+    "dispatchConsole": "Dispatch Console",
+    "accountMenu": "Account menu",
+    "signOut": "Sign out",
     "loading": "Loading...",
     "error": "Error",
     "success": "Success",

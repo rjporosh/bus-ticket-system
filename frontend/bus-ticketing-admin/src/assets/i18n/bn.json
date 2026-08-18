@@ -1,6 +1,10 @@
 {
   "app": {
     "title": "বাস টিকেটিং সিস্টেম",
+    "brandTitle": "বাস টিকেটিং",
+    "dispatchConsole": "ডিসপ্যাচ কনসোল",
+    "accountMenu": "অ্যাকাউন্ট মেনু",
+    "signOut": "সাইন আউট",
     "loading": "লোড হচ্ছে...",
     "error": "ত্রুটি",
     "success": "সফল",

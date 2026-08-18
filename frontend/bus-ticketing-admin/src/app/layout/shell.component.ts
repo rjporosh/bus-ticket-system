@@ -37,8 +37,8 @@ const NAV_ITEMS: NavItem[] = [
         <div class="sidebar__brand">
           <mat-icon>directions_bus</mat-icon>
           <div>
-            <div class="sidebar__brand-title">Bus Ticketing</div>
-            <div class="sidebar__brand-subtitle">Dispatch Console</div>
+            <div class="sidebar__brand-title">{{ 'app.brandTitle' | translate }}</div>
+            <div class="sidebar__brand-subtitle">{{ 'app.dispatchConsole' | translate }}</div>
           </div>
         </div>
 
@@ -63,7 +63,7 @@ const NAV_ITEMS: NavItem[] = [
 
           <app-language-switcher />
 
-          <button mat-icon-button [matMenuTriggerFor]="userMenu" aria-label="Account menu">
+          <button mat-icon-button [matMenuTriggerFor]="userMenu" [attr.aria-label]="'app.accountMenu' | translate">
             <mat-icon>account_circle</mat-icon>
           </button>
           <mat-menu #userMenu="matMenu">
@@ -73,7 +73,7 @@ const NAV_ITEMS: NavItem[] = [
             </div>
             <button mat-menu-item (click)="auth.logout()">
               <mat-icon>logout</mat-icon>
-              <span>Sign out</span>
+              <span>{{ 'app.signOut' | translate }}</span>
             </button>
           </mat-menu>
         </mat-toolbar>
