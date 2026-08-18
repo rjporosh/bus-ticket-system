@@ -1,5 +1,77 @@
 # Release Notes — Auth Response & Localization Fix Pass
 
+## 2026-08-18 — i18n continuation: auth screens, admin shell, common buttons audit
+
+### Fixed / What testers should check
+
+- **Client login screen (`/login`) is now fully localized.** Switch to Bengali (BN) via
+  the language switcher and confirm every visible string changes: page title, subtitle,
+  the "Username or Email" and "Password" field labels, both validation messages (try
+  submitting empty), the "Sign in" button, and the "Don't have an account? Register now"
+  footer. Also try triggering a failed login (wrong password) — the error message under
+  the form should be in the selected language too.
+- **Client register screen (`/register`) is now fully localized.** Same check as above:
+  title/subtitle, all six field labels, every validation message (empty fields, username
+  under 3 characters, invalid email, password under 8 characters, mismatched passwords),
+  the "Create Account" button, and the "Already have an account? Sign in" footer. On a
+  successful registration, the confirmation popup ("Account Created!" / and its body
+  text) should also appear in the selected language. On a failed registration, the error
+  message should too.
+  - **Testers should specifically check the password-length validation message.** It
+    previously (in unwired, unused translation data) said "at least 6 characters" in
+    both languages even though the form actually requires 8 — this has been corrected to
+    say "8 characters" in both English and Bengali. Confirm the message you see matches
+    the app's actual rule (8 characters).
+- **Admin login screen (`/login`)** — this was already localized; the one remaining gap
+  (the fallback error message shown on a failed login when the server doesn't return a
+  specific error) is now localized too.
+- **Admin shell/sidebar** — the brand title, "Dispatch Console" subtitle, "Sign out" menu
+  item, and the account-menu button's accessibility label are now localized. Switch to
+  Bengali and confirm the sidebar and top-right user menu change language along with the
+  rest of the app.
+
+### Known limitations of this pass — see `ai-handover.md` for full detail
+
+- **Most non-auth screens are still English-only in both apps** — the booking flow,
+  trip search, and "My Tickets" in the client app, and schedules/users/booking/
+  stations/buses/roles/routes management in the admin app all still have hardcoded
+  English text that doesn't respond to the language switcher. This turned out to be a
+  much bigger scope than a "common buttons" sweep once audited — see `ai-handover.md`
+  section 2.1 for the full breakdown and a prioritized list of what's safe to fix next
+  (starting with generic Save/Cancel/Close/Back dialog buttons).
+- **Production Angular builds** (`ng build --configuration production`) still could not
+  be completed in this development sandbox — same `fonts.googleapis.com` 403 as the
+  previous pass, which is a network-allowlist restriction in this environment, not a
+  code defect. Development builds (`ng build --configuration development`) succeeded
+  with zero errors for both apps, confirming all TypeScript/template changes are sound.
+- **`dotnet build` / `dotnet test` still could not be run** — no .NET SDK is available in
+  this sandbox and both `api.nuget.org` and Ubuntu's package mirror for the exact
+  `dotnet-sdk` version are unreachable here. **The backend auth fix from the previous
+  pass (`db6152f`) has now gone through three passes on this repo without ever being
+  compiler-verified** — this should be the top priority for whoever has a normal-network
+  environment with the .NET SDK available.
+- **No end-to-end/runtime verification** was performed — no way to run the API and
+  Angular dev servers together in this sandbox.
+
+### Files changed this pass
+
+```
+frontend/bus-ticketing-client/src/app/features/auth/login/login.component.ts
+frontend/bus-ticketing-client/src/app/features/auth/register/register.component.ts
+frontend/bus-ticketing-client/src/assets/i18n/en.json
+frontend/bus-ticketing-client/src/assets/i18n/bn.json
+frontend/bus-ticketing-admin/src/app/features/auth/login/login.component.ts
+frontend/bus-ticketing-admin/src/app/layout/shell.component.ts
+frontend/bus-ticketing-admin/src/assets/i18n/en.json
+frontend/bus-ticketing-admin/src/assets/i18n/bn.json
+ai-handover.md
+RELEASE_NOTES.md
+```
+
+---
+
+## 2026-08-13 — Auth response fix + i18n asset pipeline
+
 **Date:** 2026-08-13
 
 ## Fixed
@@ -73,3 +145,4 @@ frontend/bus-ticketing-client/src/assets/i18n/bn.json
 ai-handover.md
 RELEASE_NOTES.md
 ```
+
